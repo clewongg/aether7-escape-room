@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>THE LAST SIGNAL // AETHER-7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#04070a;
+  --panel:#0a1119;
+  --panel-2:#0d1620;
+  --line:#1c3540;
+  --cyan:#5be8ea;
+  --cyan-dim:#2c6b6e;
+  --amber:#ffb454;
+  --red:#ff4f4f;
+  --violet:#b98cf0;
+  --green:#6fe08a;
+  --ink:#c7dde0;
+  --ink-bright:#eef8f9;
+  --ink-dim:#587278;
+  --font-head:'Michroma', sans-serif;
+  --font-mono:'Share Tech Mono', monospace;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--void);
+  color:var(--ink);
+  font-family:var(--font-mono);
+  font-size:15px;
+  line-height:1.55;
+  overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+::selection{ background:var(--cyan); color:var(--void); }
+
+/* ---------- ambient scanline / vignette overlay ---------- */
+.crt-overlay{
+  position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+}
+.scan-sweep{
+  position:fixed; left:0; right:0; height:120px; z-index:9998; pointer-events:none;
+  background:linear-gradient(to bottom, rgba(91,232,234,0) 0%, rgba(91,232,234,0.05) 50%, rgba(91,232,234,0) 100%);
+  animation:sweep 7s linear infinite;
+}
+@keyframes sweep{ 0%{top:-120px;} 100%{top:100%;} }
+@media (prefers-reduced-motion: reduce){ .scan-sweep{animation:none; display:none;} }
+
+/* ---------- layout helpers ---------- */
+#app{ min-height:100%; }
+.view{ display:none; animation:fadeUp .5s ease; }
+.view.active{ display:block; }
+@keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+.wrap{ max-width:1080px; margin:0 auto; padding:0 20px; }
+
+/* ---------- topbar (dashboard shell) ---------- */
+#topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(6,10,14,0.92); backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 20px; gap:12px; flex-wrap:wrap;
+}
+#topbar .brand{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+#topbar .brand .dot{ width:8px; height:8px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+#topbar .brand span{ font-family:var(--font-head); font-size:13px; letter-spacing:2px; color:var(--ink-bright); }
+#topbar .oxy{ display:flex; align-items:center; gap:10px; font-size:12px; letter-spacing:1px; color:var(--ink-dim); }
+#topbar .oxy .oxy-val{ font-family:var(--font-head); font-size:15px; letter-spacing:2px; color:var(--cyan); padding:4px 10px; border:1px solid var(--cyan-dim); }
+#topbar .oxy .oxy-val.warn{ color:var(--amber); border-color:#5a4623; }
+#topbar .oxy .oxy-val.crit{ color:var(--red); border-color:#5a2323; animation:blinkbg 1s ease-in-out infinite; }
+#topbar .oxy-reset{ background:none; border:1px solid var(--line); color:var(--ink-dim); font-size:14px; width:26px; height:26px; cursor:pointer; }
+#topbar .oxy-reset:hover{ color:var(--ink); border-color:var(--ink-dim); }
+#topbar .esp-link{ width:7px; height:7px; border-radius:50%; background:var(--ink-dim); opacity:.5; }
+#topbar .esp-link.on{ background:var(--green); opacity:1; box-shadow:0 0 6px var(--green); }
+@keyframes blinkbg{ 0%,100%{background:transparent;} 50%{background:rgba(255,79,79,0.15);} }
+
+#oxyBanner{
+  display:none; position:sticky; top:57px; z-index:49; background:rgba(255,79,79,0.12);
+  border-bottom:1px solid #5a2323; color:var(--red); text-align:center; padding:8px; font-size:12.5px; letter-spacing:1px;
+}
+#oxyBanner.show{ display:block; }
+
+/* ---------- buttons ---------- */
+.btn{
+  font-family:var(--font-mono); font-size:13px; letter-spacing:1.5px;
+  background:transparent; color:var(--cyan); border:1px solid var(--cyan-dim);
+  padding:12px 22px; cursor:pointer; position:relative; transition:all .15s ease;
+  text-transform:uppercase;
+}
+.btn:hover{ background:rgba(91,232,234,0.08); border-color:var(--cyan); }
+.btn:active{ transform:scale(0.97); }
+.btn.primary{ color:var(--void); background:var(--cyan); border-color:var(--cyan); font-weight:bold; }
+.btn.primary:hover{ background:#7ff0f1; }
+.btn.danger{ color:var(--red); border-color:#5a2323; }
+.btn.danger:hover{ background:rgba(255,79,79,0.08); border-color:var(--red); }
+.btn.ghost{ border-color:var(--line); color:var(--ink-dim); }
+.btn.ghost:hover{ color:var(--ink); border-color:var(--ink-dim); }
+.btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+/* ---------- panel (bracketed HUD box) ---------- */
+.panel{ position:relative; background:var(--panel); border:1px solid var(--line); padding:22px; }
+.panel::before, .panel::after{ content:''; position:absolute; width:14px; height:14px; border:2px solid var(--cyan-dim); }
+.panel::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+.panel::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+/* ============ HOME ============ */
+#view-home.active{ min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:60px 20px; }
+.home-alert{ display:inline-flex; align-items:center; gap:8px; font-size:12px; letter-spacing:2px; color:var(--red); border:1px solid #5a2323; padding:6px 12px; margin-bottom:22px; }
+.home-alert .blip{ width:6px; height:6px; background:var(--red); border-radius:50%; animation:pulse 1s ease-in-out infinite; }
+.home-title{ font-family:var(--font-head); font-size:clamp(26px,5.6vw,48px); color:var(--ink-bright); letter-spacing:3px; line-height:1.2; }
+.home-sub{ font-family:var(--font-head); font-size:clamp(13px,2.2vw,17px); color:var(--red); letter-spacing:3px; margin-top:14px; }
+.home-desc{ max-width:600px; color:var(--ink-dim); margin-top:22px; font-size:14px; line-height:1.75; }
+.home-desc b{ color:var(--ink); }
+#view-home .begin{ margin-top:34px; }
+
+.status-panel{ margin-top:44px; max-width:520px; }
+.status-panel h4{ font-family:var(--font-head); font-size:11px; letter-spacing:2px; color:var(--ink-dim); margin-bottom:14px; font-weight:normal; }
+.status-row{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed var(--line); font-size:13px; }
+.status-row:last-child{ border-bottom:none; }
+.status-val{ letter-spacing:1px; font-size:12px; padding:3px 10px; border:1px solid; }
+.status-val.ok{ color:var(--green); border-color:#215a2e; }
+.status-val.bad{ color:var(--red); border-color:#5a2323; animation:blinkbg 1.4s ease-in-out infinite; }
+.status-val.warn{ color:var(--amber); border-color:#5a4623; }
+
+/* ============ PAGE HEAD ============ */
+.page-head{ padding:34px 0 18px; }
+.page-head .eyebrow{ font-size:11px; color:var(--cyan); letter-spacing:2px; }
+.page-head h1{ font-family:var(--font-head); font-size:clamp(20px,3vw,30px); color:var(--ink-bright); letter-spacing:2px; margin-top:8px; }
+.page-head p{ color:var(--ink-dim); margin-top:10px; max-width:640px; font-size:13.5px; }
+
+/* ============ STATION MAP ============ */
+.tile-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; padding:10px 0 50px; }
+.tile{ background:var(--panel); border:1px solid var(--line); padding:24px; cursor:pointer; transition:border-color .15s ease, transform .15s ease; position:relative; overflow:hidden; }
+.tile:hover{ border-color:var(--cyan-dim); transform:translateY(-2px); }
+.tile .idx{ font-size:11px; color:var(--ink-dim); letter-spacing:1px; }
+.tile h3{ font-family:var(--font-head); font-size:16px; color:var(--ink-bright); margin-top:10px; letter-spacing:1px; }
+.tile p{ font-size:12.5px; color:var(--ink-dim); margin-top:8px; }
+.tile .flag{ position:absolute; top:14px; right:14px; font-size:10px; letter-spacing:1px; padding:3px 8px; border:1px solid; }
+.tile .flag.locked{ color:var(--violet); border-color:#4a3766; }
+.tile .flag.open{ color:var(--green); border-color:#215a2e; }
+.tile.esp-opened{ border-color:#215a2e; animation:openGlow 2s ease-in-out infinite; }
+@keyframes openGlow{ 0%,100%{ box-shadow:0 0 0 rgba(111,224,138,0); } 50%{ box-shadow:0 0 16px rgba(111,224,138,0.35); } }
+
+/* ============ SECTION WITHIN A ROOM ============ */
+.room-section{ margin-bottom:46px; }
+.room-section .sec-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:10px; }
+.room-section .sec-head .sec-idx{ font-size:11px; color:var(--cyan); letter-spacing:1.5px; }
+.room-section .sec-head h2{ font-family:var(--font-head); font-size:14px; color:var(--ink-bright); letter-spacing:1px; }
+.room-section .sec-desc{ font-size:12.5px; color:var(--ink-dim); margin:-8px 0 16px; max-width:600px; }
+
+/* ============ CREW / MANIFEST ============ */
+.crew-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.crew-card{ background:var(--panel); border:1px solid var(--line); padding:18px; cursor:pointer; transition:border-color .15s ease; }
+.crew-card:hover{ border-color:var(--cyan-dim); }
+.avatar{ width:100%; aspect-ratio:1/1; border:1px solid var(--line); margin-bottom:12px; position:relative; overflow:hidden; background:linear-gradient(160deg, #0c1620, #131f2b); }
+.avatar svg{ width:100%; height:100%; display:block; }
+.avatar::after{ content:''; position:absolute; inset:0; background:repeating-linear-gradient(to bottom, rgba(91,232,234,0.05) 0 1px, transparent 1px 3px); }
+.avatar .tag{ position:absolute; bottom:6px; left:6px; font-size:9.5px; color:var(--cyan); letter-spacing:1px; background:rgba(4,7,10,0.7); padding:2px 6px; }
+.crew-card h3{ font-family:var(--font-head); font-size:13.5px; color:var(--ink-bright); letter-spacing:.5px; }
+.crew-card .role{ font-size:12px; color:var(--amber); margin-top:4px; }
+.crew-card .stat{ display:inline-block; margin-top:8px; font-size:10.5px; letter-spacing:1px; padding:3px 8px; border:1px solid; }
+.crew-card .stat.confirmed{ color:var(--green); border-color:#215a2e; }
+.crew-card .stat.unknown{ color:var(--red); border-color:#5a2323; }
+.crew-card .stat.deceased{ color:var(--violet); border-color:#4a2f6b; }
+.crew-card .teaser{ font-size:12px; color:var(--ink-dim); margin-top:8px; }
+.crew-card .weapon-note{ font-size:11px; color:var(--amber); margin-top:8px; letter-spacing:.5px; }
+
+.detail-overlay{ position:fixed; inset:0; z-index:80; background:rgba(3,5,7,0.86); backdrop-filter:blur(3px); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto; }
+.detail-overlay.active{ display:flex; }
+.detail-card{ background:var(--panel-2); border:1px solid var(--line); max-width:640px; width:100%; padding:0; }
+.detail-card .dc-head{ display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line); }
+.detail-card .dc-head span{ font-family:var(--font-head); font-size:12px; letter-spacing:2px; color:var(--cyan); }
+.detail-card .dc-close{ background:none; border:none; color:var(--ink-dim); font-size:20px; cursor:pointer; line-height:1;}
+.detail-card .dc-close:hover{ color:var(--red); }
+.detail-body{ display:flex; gap:20px; padding:22px; flex-wrap:wrap; }
+.detail-body .dc-avatar{ width:150px; flex:0 0 150px; }
+.detail-body .dc-avatar .avatar{ margin-bottom:0; }
+.detail-info{ flex:1; min-width:200px; }
+.detail-info h2{ font-family:var(--font-head); font-size:17px; color:var(--ink-bright); letter-spacing:1px; }
+.detail-info .role{ color:var(--amber); font-size:12.5px; margin-top:4px; }
+.detail-info .field{ margin-top:14px; }
+.detail-info .field label{ display:block; font-size:10.5px; color:var(--ink-dim); letter-spacing:1.5px; margin-bottom:4px; }
+.detail-info .field div{ font-size:13px; color:var(--ink); }
+
+.classified-block{ border:1px solid #4a3766; background:rgba(185,140,240,0.05); padding:14px; margin-top:16px; position:relative; }
+.classified-block .cb-label{ font-size:10.5px; color:var(--violet); letter-spacing:2px; margin-bottom:8px; }
+.classified-block .cb-text{ color:var(--ink); font-size:13px; }
+.classified-block.locked .cb-text{ filter:blur(5px); user-select:none; }
+.classified-block .cb-lock{ display:none; }
+.classified-block.locked .cb-lock{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px; background:rgba(10,17,25,0.55); }
+.classified-block.locked .cb-lock span{ font-family:var(--font-head); font-size:10.5px; color:var(--violet); letter-spacing:2px; }
+
+/* ============ PIANO (Docking Bay acoustic panel) ============ */
+.piano-shell{ max-width:820px; }
+.piano{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:16px; user-select:none; -webkit-user-select:none; touch-action:none; }
+.piano-key{
+  background:#060b10; border:1px solid var(--line); cursor:pointer; position:relative; padding:8px 10px 10px;
+  display:flex; flex-direction:column; gap:6px; color:var(--ink); font-family:var(--font-mono);
+  transition:border-color .1s ease, box-shadow .1s ease, transform .05s ease;
+}
+.piano-key:hover{ border-color:var(--cyan-dim); }
+.piano-key canvas{ width:100%; height:56px; display:block; }
+.piano-key .meta{ display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+.piano-key .note{ font-size:11.5px; color:var(--ink-bright); letter-spacing:1px; }
+.piano-key .hz{ font-size:11px; color:var(--amber); }
+.piano-key .kbd{ margin-left:auto; font-size:9.5px; color:var(--ink-dim); border:1px solid var(--line); padding:0 4px; }
+.piano-key.down{ border-color:var(--cyan); box-shadow:0 0 14px rgba(91,232,234,0.35); transform:translateY(1px); }
+.piano-readout{ margin-top:14px; font-size:12.5px; color:var(--ink-dim); letter-spacing:1px; min-height:18px; }
+.piano-readout b{ color:var(--cyan); }
+@media (max-width:640px){ .piano{ grid-template-columns:repeat(2, 1fr); gap:8px; } .piano-key .kbd{ display:none; } }
+
+/* ============ LOGS (generic, used by docking log + command log) ============ */
+.log-list{ display:flex; flex-direction:column; gap:10px; }
+.log-entry{ background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--cyan-dim); padding:14px 18px; }
+.log-entry .lh{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:11px; color:var(--ink-dim); letter-spacing:1px; margin-bottom:8px; }
+.log-entry .lh b{ color:var(--cyan); }
+.log-entry .lt{ font-size:13px; color:var(--ink); }
+.log-entry.flagged{ border-left-color:var(--red); }
+.log-entry.cipher{ border-left-color:var(--violet); }
+
+/* ============ SPECIMENS ============ */
+.weapon-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.weapon-card{ background:var(--panel); border:1px solid var(--line); padding:18px; }
+.weapon-icon{ width:100%; height:120px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; background:#0c1620; margin-bottom:12px; }
+.weapon-icon svg{ width:60px; height:60px; stroke:var(--cyan); }
+.weapon-card h3{ font-family:var(--font-head); font-size:13px; color:var(--ink-bright); letter-spacing:.5px; }
+.weapon-card .loc{ font-size:11.5px; color:var(--amber); margin-top:4px; }
+.weapon-card p{ font-size:12.5px; color:var(--ink-dim); margin-top:8px; }
+.weapon-card.classified .weapon-icon svg{ stroke:var(--violet); }
+
+/* ============ GATE (archive password) ============ */
+.gate{ max-width:480px; margin:6px auto 10px; text-align:center; }
+.gate .lock-icon{ font-size:38px; color:var(--red); margin-bottom:10px; }
+.gate h2{ font-family:var(--font-head); font-size:15px; letter-spacing:2px; color:var(--red); }
+.gate p{ font-size:12.5px; color:var(--ink-dim); margin-top:10px; }
+.gate-form{ display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; }
+.gate-form input{
+  flex:1; min-width:160px; background:var(--panel); border:1px solid var(--line); color:var(--ink-bright);
+  font-family:var(--font-mono); font-size:15px; letter-spacing:3px; text-align:center; padding:12px; text-transform:uppercase;
+}
+.gate-form input:focus{ outline:none; border-color:var(--cyan); }
+.gate-msg{ margin-top:14px; font-size:12px; letter-spacing:1px; min-height:16px; }
+.gate-msg.err{ color:var(--red); }
+.gate-msg.ok{ color:var(--green); }
+.gated-content{ display:none; }
+.gated-content.active{ display:block; }
+.evidence-card{ background:var(--panel); border:1px solid var(--violet); padding:20px; margin-bottom:14px; }
+.evidence-card h4{ font-family:var(--font-head); font-size:12px; color:var(--violet); letter-spacing:1.5px; margin-bottom:10px; }
+.evidence-card p{ font-size:13px; color:var(--ink); }
+
+.success-card{ display:none; max-width:520px; margin:6px auto 10px; text-align:center; }
+.success-card.active{ display:block; }
+.success-card .ok-icon{ font-size:38px; color:var(--green); margin-bottom:10px; }
+.success-card h2{ font-family:var(--font-head); font-size:15px; letter-spacing:2px; color:var(--green); }
+.success-card p{ font-size:12.5px; color:var(--ink-dim); margin-top:10px; }
+
+.footer-nav{ padding:20px 0 60px; display:flex; gap:12px; flex-wrap:wrap; }
+
+/* ============ MISSION BRIEF / CASE FILE ============ */
+.brief-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:34px; max-width:860px; }
+.brief-item{ border-left:2px solid var(--cyan-dim); padding:4px 0 4px 12px; }
+.brief-item label{ display:block; font-size:10.5px; color:var(--ink-dim); letter-spacing:1.5px; }
+.brief-item div{ font-size:13px; color:var(--ink-bright); margin-top:2px; }
+.brief-item.threat{ border-left-color:var(--red); }
+.brief-item.threat div{ color:var(--red); }
+.questions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:26px; }
+.questions span{ font-family:var(--font-head); font-size:12px; letter-spacing:2px; color:var(--amber); border:1px solid #5a4623; padding:8px 14px; }
+.tile .meta{ display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+.tile .meta span{ font-size:10px; letter-spacing:1px; padding:2px 7px; border:1px solid var(--line); color:var(--ink-dim); }
+.tile .meta .atm-emergency{ color:#ff5fd2; border-color:#5a2350; }
+.tile .meta .atm-mystery{ color:var(--violet); border-color:#4a3766; }
+.tile .meta .atm-urgency{ color:#6f8cff; border-color:#28356b; }
+.case-file{ margin-bottom:50px; }
+.case-file h4{ font-family:var(--font-head); font-size:11px; letter-spacing:2px; color:var(--ink-dim); margin-bottom:6px; font-weight:normal; }
+.case-file .cf-note{ font-size:12px; color:var(--ink-dim); margin-bottom:16px; }
+.case-cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px; }
+.case-col h5{ font-family:var(--font-head); font-size:12px; letter-spacing:2px; color:var(--amber); margin-bottom:8px; font-weight:normal; }
+.case-col ul{ list-style:none; }
+.case-col li{ font-size:13px; padding:7px 10px; border:1px solid var(--line); margin-bottom:6px; cursor:pointer; user-select:none; transition:all .15s ease; }
+.case-col li:hover{ border-color:var(--cyan-dim); }
+.case-col li.ruled-out{ color:var(--ink-dim); text-decoration:line-through; opacity:.55; }
+.case-col li .sw{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+.final-msg{ border:1px dashed var(--violet); background:rgba(185,140,240,0.06); padding:10px 12px; margin-top:6px; font-style:italic; color:var(--ink-bright); }
+
+@media (max-width:640px){
+  #topbar .oxy{ order:3; width:100%; justify-content:space-between; }
+  .detail-body{ flex-direction:column; }
+  .detail-body .dc-avatar{ width:100%; }
+}
+
+/* ============ PRE-BOOT: HACKED LOCK SCREEN ============ */
+#lockScreen{
+  position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+  padding:20px; background:var(--void);
+}
+.lock-card{ max-width:480px; width:100%; text-align:center; border-color:#5a2323; box-shadow:0 0 25px rgba(255,79,79,0.25); }
+.lock-blink{ color:var(--red); font-size:11px; letter-spacing:2px; font-weight:bold; margin-bottom:10px; animation:pulse 1.2s ease-in-out infinite; }
+.lock-title{ font-family:var(--font-head); font-size:18px; color:var(--red); letter-spacing:2px; text-shadow:0 0 8px rgba(255,79,79,0.5); }
+.lock-prompt{ font-size:12.5px; color:var(--ink-dim); margin:14px 0 22px; }
+.cipher-box{
+  background:#000; border:1px dashed var(--red); padding:14px; font-size:1.1rem; letter-spacing:3px;
+  font-weight:bold; color:#ff9999; margin-bottom:12px; user-select:all;
+}
+.lock-clue{ font-size:11.5px; color:var(--ink-dim); font-style:italic; margin-bottom:22px; }
+#lockInput{
+  width:100%; padding:12px; background:#000; border:1px solid var(--red); color:var(--ink-bright);
+  font-family:var(--font-mono); font-size:14px; letter-spacing:2px; text-transform:uppercase;
+  text-align:center; margin-bottom:14px; box-sizing:border-box;
+}
+#lockInput:focus{ outline:none; box-shadow:0 0 8px var(--red); }
+.lock-btn{ width:100%; }
+.lock-feedback{ margin-top:14px; font-size:12.5px; font-weight:bold; min-height:18px; letter-spacing:.5px; }
+.lock-feedback.ok{ color:var(--green); }
+.lock-feedback.err{ color:var(--red); }
+.hint-btn{ background:none; border:none; color:var(--ink-dim); font-size:11.5px; text-decoration:underline; cursor:pointer; margin-top:16px; padding:0; }
+.hint-btn:hover{ color:var(--ink); }
+.lock-hint{ display:none; font-size:11.5px; color:var(--ink-dim); margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+<div class="scan-sweep"></div>
+
+<!-- ---------- PRE-BOOT: HACKED LOCK SCREEN ---------- -->
+<div id="lockScreen">
+  <div class="lock-card panel">
+    <div class="lock-blink">[ WARNING: SYSTEM COMPROMISED ]</div>
+    <h1 class="lock-title">THE SYSTEM IS HACKED</h1>
+    <p class="lock-prompt">Enter the override code to unlock AETHER-7's station computer.</p>
+    <div class="cipher-box">WKHUH LV DQ DOLHQ DPRQJ XV</div>
+    <div class="lock-clue">Intercepted note: &ldquo;Caesar shifts 3 steps forward.&rdquo;</div>
+    <input type="text" id="lockInput" placeholder="ENTER OVERRIDE CODE" autocomplete="off" onkeydown="if(event.key==='Enter')attemptUnlockScreen()">
+    <button class="btn danger lock-btn" onclick="attemptUnlockScreen()">OVERRIDE LOCKOUT</button>
+    <div id="lockFeedback" class="lock-feedback"></div>
+    <button class="hint-btn" onclick="toggleLockHint()">Need a hint?</button>
+    <div id="lockHint" class="lock-hint">Each letter was pushed forward 3 places (A &rarr; D). Shift each letter backwards by 3 to read it.</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" style="display:none;">
+
+  <!-- ---------- HOME ---------- -->
+  <section class="view active" id="view-home">
+    <div class="wrap">
+      <div class="home-alert"><span class="blip"></span> ECHO CORE UNSTABLE &mdash; DETONATION IMMINENT</div>
+      <h1 class="home-title">THE LAST SIGNAL</h1>
+      <div class="home-sub">MISSION ECHO: INCIDENT REPORT &nbsp;//&nbsp; YEAR 2187</div>
+      <p class="home-desc">
+        Six elite space scientists have been stationed aboard the research vessel <b>AETHER-7</b>, a
+        laboratory orbiting a newly discovered planet. Their mission, known as <b>Mission ECHO</b>, is
+        highly classified. Deep beneath the planet's surface, the crew discovered an unknown energy
+        source known as the <b>ECHO Core</b>. Initial experiments showed that the Core could generate
+        enormous amounts of energy, enough to power entire colonies.
+        <br><br>
+        For months, the six scientists lived and worked together aboard AETHER-7. But last night,
+        something went terribly wrong. At <b>02:17</b>, the ship's security system detected an
+        unexplained power failure. For exactly <b>seven minutes</b>, the surveillance cameras, door logs
+        and communication systems went offline. When emergency power returned, one member of the
+        research team was found <b>dead</b>. The remaining five scientists all claim they are innocent.
+        But security records reveal something disturbing: <b>one of them is lying.</b>
+        <br><br>
+        Three possible weapons have been recovered aboard the ship. Evidence has been detected at three
+        possible locations. And every surviving scientist had access to all parts of the laboratory.
+        <br><br>
+        Your <b>security team</b> has been dispatched to AETHER-7 to investigate what happened. Search the
+        <b>Docking Bay</b>, the <b>Research Laboratory</b> and the <b>Command Deck</b>, then escape before
+        the station explodes. But be careful. <b>The killer is still aboard the ship.</b>
+      </p>
+      <div class="questions">
+        <span>WHO KILLED THE SCIENTIST?</span>
+        <span>WHAT WEAPON WAS USED?</span>
+        <span>WHERE WAS THE BODY FOUND?</span>
+      </div>
+      <div class="begin">
+        <button class="btn primary" onclick="beginOperation()">BEGIN INVESTIGATION</button>
+      </div>
+
+      <div class="brief-grid">
+        <div class="brief-item"><label>SETTING</label><div>Space Research Station AETHER-7, Mission ECHO</div></div>
+        <div class="brief-item"><label>YOUR ROLE</label><div>Security Team</div></div>
+        <div class="brief-item"><label>OBJECTIVE</label><div>Investigate the research station and escape</div></div>
+        <div class="brief-item threat"><label>MAIN THREAT</label><div>Explosion if not completed within the time limit</div></div>
+      </div>
+
+      <div class="status-panel panel">
+        <h4>AETHER-7 SYSTEM STATUS</h4>
+        <div class="status-row"><span>Surveillance Cameras</span><span class="status-val bad">OFFLINE 02:17&ndash;02:24</span></div>
+        <div class="status-row"><span>Station Power</span><span class="status-val warn">EMERGENCY</span></div>
+        <div class="status-row"><span>ECHO Core</span><span class="status-val bad">UNSTABLE</span></div>
+        <div class="status-row"><span>Self-Destruct Countdown</span><span class="status-val warn">ARMED</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- SHELL (topbar + rooms) ---------- -->
+  <div id="shell" style="display:none;">
+    <div id="topbar">
+      <div class="brand" onclick="showView('map')">
+        <span class="dot"></span><span>AETHER-7 // TERMINAL</span>
+      </div>
+      <div class="oxy">
+        DETONATION IN <span class="oxy-val" id="oxyVal">45:00</span>
+        <button class="oxy-reset" id="oxyResetBtn" onclick="resetOxygen()" title="Reset countdown timer (game master)">&#8635;</button>
+        <span class="esp-link" id="espLink" title="ESP32 link: offline"></span>
+      </div>
+    </div>
+    <div id="oxyBanner">ECHO CORE DETONATION &mdash; NOTIFY YOUR GAME MASTER</div>
+
+    <!-- ---------- STATION MAP ---------- -->
+    <section class="view" id="view-map">
+      <div class="wrap">
+        <div class="page-head">
+          <div class="eyebrow">STATION MAP</div>
+          <h1>AETHER-7 &mdash; DECK OVERVIEW</h1>
+          <p>Choose a compartment to access its terminal. Restore the station, discover the truth, then escape. Everything you find is logged.</p>
+        </div>
+        <div class="tile-grid">
+          <div class="tile" id="tile-dockingbay" onclick="showView('dockingbay')">
+            <div class="idx">COMPARTMENT 01</div>
+            <h3>DOCKING BAY</h3>
+            <p>Entry point. Restore the station's systems. Personnel files and docking records are stored here.</p>
+            <div class="meta"><span>RESTORE</span><span class="atm-emergency">EMERGENCY</span><span>EASY</span></div>
+            <span class="flag open" id="flag-dockingbay">OPEN</span>
+          </div>
+          <div class="tile" id="tile-trophyroom" onclick="attemptOpenCompartment('trophyroom')">
+            <div class="idx">COMPARTMENT 02</div>
+            <h3>RESEARCH LABORATORY</h3>
+            <p>Where the ECHO Core experiments were run. Recovered weapons and a sealed evidence vault.</p>
+            <div class="meta"><span>DISCOVER</span><span class="atm-mystery">MYSTERY</span><span>MEDIUM</span></div>
+            <span class="flag locked" id="flag-trophyroom">LOCKED</span>
+          </div>
+          <div class="tile" id="tile-cockpit" onclick="attemptOpenCompartment('cockpit')">
+            <div class="idx">COMPARTMENT 03</div>
+            <h3>COMMAND DECK</h3>
+            <p>Navigation and launch controls &mdash; the only way off this station before it explodes.</p>
+            <div class="meta"><span>ESCAPE</span><span class="atm-urgency">URGENCY</span><span>DIFFICULT</span></div>
+            <span class="flag locked" id="flag-cockpit">LOCKED</span>
+          </div>
+        </div>
+
+        <div class="case-file panel">
+          <h4>CASE FILE &mdash; MISSION ECHO</h4>
+          <p class="cf-note">Tap an entry to rule it out as you investigate.</p>
+          <div class="case-cols">
+            <div class="case-col"><h5>WHO? &mdash; SUSPECTS</h5><ul id="caseSuspects"></ul></div>
+            <div class="case-col"><h5>WHAT? &mdash; WEAPONS</h5><ul id="caseWeapons"></ul></div>
+            <div class="case-col"><h5>WHERE? &mdash; LOCATIONS</h5><ul id="caseLocations"></ul></div>
+          </div>
+        </div>
+
+        <div class="status-panel panel" style="margin-bottom:50px;">
+          <h4>AETHER-7 SYSTEM STATUS</h4>
+          <div class="status-row"><span>Surveillance Cameras</span><span class="status-val bad">OFFLINE 02:17&ndash;02:24</span></div>
+          <div class="status-row"><span>Station Power</span><span class="status-val warn">EMERGENCY</span></div>
+          <div class="status-row"><span>ECHO Core</span><span class="status-val bad">UNSTABLE</span></div>
+          <div class="status-row"><span>Self-Destruct Countdown</span><span class="status-val warn">ARMED</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- DOCKING BAY ---------- -->
+    <section class="view" id="view-dockingbay">
+      <div class="wrap">
+        <div class="page-head">
+          <div class="eyebrow">COMPARTMENT 01</div>
+          <h1>DOCKING BAY</h1>
+          <p>Your team's entry point. Emergency power only. Restore what you can and start the investigation here.</p>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">01.A</span><h2>PERSONNEL FILES</h2></div>
+          <p class="sec-desc">One scientist dead. Five survivors, all claiming innocence. One of them is lying. Tap a profile for the full file. Suspicions and alibis are sealed until the vault is unlocked.</p>
+          <div class="crew-grid" id="crewGrid"></div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">01.B</span><h2>DOCKING LOG</h2></div>
+          <p class="sec-desc">Automated records from the airlock and docking systems.</p>
+          <div class="log-list" id="dockingLogList"></div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">01.C</span><h2>PLANETARY SIGNAL PANEL</h2></div>
+          <p class="sec-desc">A console wired into the airlock's acoustic system. Each waveform is a planet's signature signal. Press and hold a wave to broadcast it through the station speakers, or use the keyboard letters shown.</p>
+          <div class="piano-shell panel">
+            <div class="piano" id="piano"></div>
+            <div class="piano-readout" id="pianoReadout">LAST SIGNALS: &mdash;</div>
+          </div>
+        </div>
+
+        <div class="footer-nav"><button class="btn ghost" onclick="showView('map')">&larr; STATION MAP</button></div>
+      </div>
+    </section>
+
+    <!-- ---------- TROPHY ROOM ---------- -->
+    <section class="view" id="view-trophyroom">
+      <div class="wrap">
+        <div class="page-head">
+          <div class="eyebrow">COMPARTMENT 02</div>
+          <h1>RESEARCH LABORATORY</h1>
+          <p>Where the ECHO Core experiments were run. Every surviving scientist had access to this room.</p>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">02.A</span><h2>RECOVERED WEAPONS</h2></div>
+          <p class="sec-desc">Three possible weapons recovered aboard the ship. Forensic detail on flagged items is sealed.</p>
+          <div class="weapon-grid" id="weaponGrid"></div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">02.B</span><h2>SEALED VAULT</h2></div>
+          <p class="sec-desc">Where Dr. Brown Vale stored the evidence from their secret investigation. Requires a decryption code.</p>
+
+          <div id="gateBlock" class="gate panel">
+            <div class="lock-icon">&#9679;</div>
+            <h2>ACCESS DENIED</h2>
+            <p>This partition was locked at the time of the incident.<br>Enter the decryption code to continue.</p>
+            <div class="gate-form">
+              <input id="gateInput" type="text" placeholder="DECRYPTION CODE" maxlength="20" autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlockArchive()">
+              <button class="btn primary" onclick="tryUnlockArchive()">SUBMIT</button>
+            </div>
+            <div class="gate-msg" id="gateMsg"></div>
+          </div>
+
+          <div id="archiveContent" class="gated-content">
+            <div class="evidence-card">
+              <h4>PERSONAL LOG &mdash; DR. BRUNO &ldquo;BROWN&rdquo; VALE, DATA ANALYST</h4>
+              <p>"I know who altered the ECHO files. If something happens to me, don't trust the
+              official report. Everything I found is in this vault. Compare the suspicions against
+              the alibis, because one of them doesn't hold up."</p>
+            </div>
+            <div class="evidence-card">
+              <h4>SYSTEM ADDENDUM</h4>
+              <p>ECHO Core research records show several result files were altered in the weeks before the
+              incident. The 02:17 blackout was triggered manually from a maintenance panel, not by a fault.
+              One door entry into a restricted laboratory was logged minutes before the cameras went dark.
+              Personnel suspicions and alibis are now unsealed &mdash; cross-reference the personnel files in
+              the Docking Bay.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-nav"><button class="btn ghost" onclick="showView('map')">&larr; STATION MAP</button></div>
+      </div>
+    </section>
+
+    <!-- ---------- SPACESHIP COCKPIT ---------- -->
+    <section class="view" id="view-cockpit">
+      <div class="wrap">
+        <div class="page-head">
+          <div class="eyebrow">COMPARTMENT 03</div>
+          <h1>COMMAND DECK</h1>
+          <p>Navigation and launch controls, and the only way off this station before the ECHO Core explodes.</p>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">03.A</span><h2>FLIGHT INSTRUMENTS</h2></div>
+          <p class="sec-desc">Status readout from AETHER-7's escape systems.</p>
+          <div class="status-panel panel">
+            <h4>ESCAPE SHUTTLE STATUS</h4>
+            <div class="status-row"><span>Docking Clamps</span><span class="status-val bad">ENGAGED</span></div>
+            <div class="status-row"><span>Fuel Reserve</span><span class="status-val warn">72%</span></div>
+            <div class="status-row"><span>Hull Integrity</span><span class="status-val warn">NOMINAL</span></div>
+            <div class="status-row"><span>Ignition</span><span class="status-val bad">STANDBY</span></div>
+          </div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">03.B</span><h2>COMMAND LOGS</h2></div>
+          <p class="sec-desc">Raw entries from the Command Deck's navigation console.</p>
+          <div class="log-list" id="cockpitLogList"></div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">03.C</span><h2>LAUNCH SEQUENCE</h2></div>
+          <p class="sec-desc">Enter the six-digit launch code to undock and get clear of AETHER-7 before it explodes.</p>
+
+          <div id="launchGate" class="gate panel">
+            <div class="lock-icon">&#9679;</div>
+            <h2>IGNITION LOCKED</h2>
+            <p>Enter the 6-digit launch code.</p>
+            <div class="gate-form">
+              <input id="launchInput" type="text" inputmode="numeric" placeholder="6-DIGIT CODE" maxlength="6" autocomplete="off" onkeydown="if(event.key==='Enter')tryLaunch()">
+              <button class="btn danger" onclick="tryLaunch()">LAUNCH</button>
+            </div>
+            <div class="gate-msg" id="launchMsg"></div>
+          </div>
+
+          <div id="launchSuccess" class="success-card panel">
+            <div class="ok-icon">&#9679;</div>
+            <h2>CLEAR FOR LAUNCH</h2>
+            <p>The shuttle undocks and pulls away seconds before the ECHO Core detonates. Investigation complete &mdash; report your verdict: WHO, WHAT and WHERE.</p>
+          </div>
+        </div>
+
+        <div class="footer-nav"><button class="btn ghost" onclick="showView('map')">&larr; STATION MAP</button></div>
+      </div>
+    </section>
+
+  </div><!-- /shell -->
+
+  <!-- ---------- crew / cctv modals ---------- -->
+  <div class="detail-overlay" id="crewModal">
+    <div class="detail-card" id="crewModalCard"></div>
+  </div>
+</div><!-- /app -->
+
+<script>
+/* =========================================================================
+   CONFIG -- change these to reset the puzzles for a new run
+   ========================================================================= */
+async function sha(s){
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('aether7|' + s));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
+}
+const CONFIG = {
+  oxygenMinutes: 45,                // detonation countdown length once the team begins
+  archivePassword: "32c565b0813df792726a4ba8ace855267bc49b1b268faf6ec60ec05be14a1c85",  // SHA-256 hash
+  launchCode: "27482fe772d96e0a197e6d09f966e410504b92cd671de261db41704ab2113d6e",  // SHA-256 hash
+  lockScreenCode: "05c2bcf5ad132b3af39537419cedb529c7c6dfd86bdef903312c57db83027ee9",  // SHA-256 hash
+  trophyRoomCode: "66136a32a661b03ed7619294fde77bab6a22eefa54347d0a426f98c2572b0a18",  // SHA-256 hash
+  cockpitClearanceCode: "66136a32a661b03ed7619294fde77bab6a22eefa54347d0a426f98c2572b0a18",  // SHA-256 hash
+  esp32StatusUrl: "http://192.168.4.1/status",   // ESP32 room 2 lock; replies "locked" or "unlocked"
+  esp32Status3Url: "http://192.168.4.1/status3", // ESP32 room 3 lock; replies "locked" or "unlocked"
+  esp32PollMs: 1000                 // how often to ask the ESP32 for the lock states
+};
+
+/* =========================================================================
+   PRE-BOOT LOCK SCREEN (Caesar-shift override puzzle)
+   ========================================================================= */
+async function attemptUnlockScreen(){
+  const inputField = document.getElementById('lockInput');
+  const feedback = document.getElementById('lockFeedback');
+  const attempt = inputField.value.trim().toUpperCase().replace(/\s+/g, ' ');
+  if(!attempt){
+    feedback.className = 'lock-feedback err';
+    feedback.textContent = 'PLEASE ENTER AN OVERRIDE CODE.';
+    return;
+  }
+  if(await sha(attempt) === CONFIG.lockScreenCode){
+    feedback.className = 'lock-feedback ok';
+    feedback.textContent = 'CODE ACCEPTED. RESTORING ACCESS...';
+    inputField.disabled = true;
+    setTimeout(() => {
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }, 1000);
+  } else {
+    feedback.className = 'lock-feedback err';
+    feedback.textContent = 'INVALID CODE. ATTEMPT LOGGED.';
+  }
+}
+function toggleLockHint(){
+  const hint = document.getElementById('lockHint');
+  hint.style.display = hint.style.display === 'block' ? 'none' : 'block';
+}
+
+/* =========================================================================
+   VIEW ROUTER
+   ========================================================================= */
+function beginOperation(){
+  document.getElementById('view-home').classList.remove('active');
+  document.getElementById('shell').style.display = 'block';
+  showView('map');
+  buildCrew(); buildWeapons(); buildDockingLog(); buildCockpitLog(); buildCaseFile();
+  startOxygen();
+}
+function showView(name){
+  document.querySelectorAll('#shell .view').forEach(v=>v.classList.remove('active'));
+  const el = document.getElementById('view-' + name);
+  if(el) el.classList.add('active');
+  if(name === 'dockingbay') requestAnimationFrame(drawWaves);   // wave canvases need a visible size
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* =========================================================================
+   COMPARTMENT ACCESS LOCKS (Trophy Room + Cockpit gated from the station map)
+   ========================================================================= */
+const COMPARTMENT_LOCKS = {
+  trophyroom: { code: CONFIG.trophyRoomCode, unlocked: false, prompt: 'ENTER OVERRIDE CODE TO ACCESS THE RESEARCH LABORATORY:' },
+  cockpit:    { code: CONFIG.cockpitClearanceCode, unlocked: false, prompt: 'ENTER COCKPIT CLEARANCE KEY:' }
+};
+async function attemptOpenCompartment(name){
+  const lock = COMPARTMENT_LOCKS[name];
+  if(!lock || lock.unlocked){ showView(name); return; }
+  const attempt = prompt(lock.prompt);
+  if(attempt === null) return; // player cancelled
+  if(await sha(attempt.trim()) === lock.code){
+    lock.unlocked = true;
+    const flag = document.getElementById('flag-' + name);
+    if(flag){ flag.textContent = 'OPEN'; flag.classList.remove('locked'); flag.classList.add('open'); }
+    showView(name);
+  } else {
+    alert('ACCESS DENIED \u2014 incorrect code.');
+  }
+}
+
+/* =========================================================================
+   OXYGEN COUNTDOWN
+   ========================================================================= */
+let oxySecondsLeft = CONFIG.oxygenMinutes * 60;
+let oxyTimerHandle = null;
+function startOxygen(){
+  if(oxyTimerHandle) return;
+  renderOxygen();
+  oxyTimerHandle = setInterval(()=>{
+    if(oxySecondsLeft > 0) oxySecondsLeft--;
+    renderOxygen();
+  }, 1000);
+}
+function renderOxygen(){
+  const m = Math.floor(oxySecondsLeft / 60);
+  const s = oxySecondsLeft % 60;
+  const el = document.getElementById('oxyVal');
+  el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  el.classList.remove('warn','crit');
+  const banner = document.getElementById('oxyBanner');
+  if(oxySecondsLeft <= 0){
+    el.classList.add('crit');
+    banner.classList.add('show');
+  } else if(oxySecondsLeft <= 300){
+    el.classList.add('crit');
+    banner.classList.remove('show');
+  } else if(oxySecondsLeft <= 900){
+    el.classList.add('warn');
+    banner.classList.remove('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+function resetOxygen(){
+  const mins = prompt("Reset detonation countdown to how many minutes? (game master only)", CONFIG.oxygenMinutes);
+  if(mins === null) return;
+  const n = parseFloat(mins);
+  if(!isNaN(n) && n > 0){
+    oxySecondsLeft = Math.round(n * 60);
+    document.getElementById('oxyBanner').classList.remove('show');
+    renderOxygen();
+  }
+}
+function stabilizeOxygen(){
+  if(oxyTimerHandle){ clearInterval(oxyTimerHandle); oxyTimerHandle = null; }
+  document.getElementById('oxyBanner').classList.remove('show');
+  const el = document.getElementById('oxyVal');
+  el.classList.remove('warn','crit');
+  el.textContent = 'ESCAPED';
+}
+
+/* =========================================================================
+   AVATAR / ICON GENERATORS (procedural, no external images needed)
+   ========================================================================= */
+function avatarSVG(seed, tint){
+  const c = tint || "#5be8ea";
+  const s = seed % 5;
+  const shapes = [
+    `<circle cx="50" cy="38" r="18" fill="none" stroke="${c}" stroke-width="2"/><path d="M20 90 Q50 55 80 90" fill="none" stroke="${c}" stroke-width="2"/>`,
+    `<rect x="32" y="20" width="36" height="36" fill="none" stroke="${c}" stroke-width="2"/><path d="M15 92 Q50 60 85 92" fill="none" stroke="${c}" stroke-width="2"/>`,
+    `<polygon points="50,18 70,45 60,80 40,80 30,45" fill="none" stroke="${c}" stroke-width="2"/>`,
+    `<circle cx="50" cy="36" r="16" fill="none" stroke="${c}" stroke-width="2"/><rect x="25" y="58" width="50" height="30" fill="none" stroke="${c}" stroke-width="2"/>`,
+    `<ellipse cx="50" cy="40" rx="20" ry="24" fill="none" stroke="${c}" stroke-width="2"/><path d="M18 90 Q50 62 82 90" fill="none" stroke="${c}" stroke-width="2"/>`
+  ];
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    <defs><pattern id="grid${seed}" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M10 0 L0 0 0 10" fill="none" stroke="${c}" stroke-opacity="0.08" stroke-width="0.5"/>
+    </pattern></defs>
+    <rect width="100" height="100" fill="url(#grid${seed})"/>
+    ${shapes[s]}
+    <line x1="0" y1="${20+seed*7%60}" x2="100" y2="${20+seed*7%60}" stroke="${c}" stroke-opacity="0.25" stroke-width="0.6"/>
+  </svg>`;
+}
+const SPECIMEN_ICONS = {
+  statue: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><circle cx="32" cy="14" r="7"/><path d="M24 22 L40 22 L37 44 L27 44 Z"/><rect x="18" y="44" width="28" height="8"/><rect x="14" y="52" width="36" height="6"/></svg>`,
+  injector: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><rect x="22" y="14" width="14" height="32" rx="2" transform="rotate(35 29 30)"/><line x1="40" y1="8" x2="50" y2="15"/><line x1="45" y1="11" x2="38" y2="21"/><line x1="18" y1="44" x2="10" y2="56"/><line x1="24" y1="26" x2="30" y2="30"/><line x1="21" y1="31" x2="27" y2="35"/></svg>`,
+  wrench: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><path d="M44 8 A12 12 0 0 0 36 26 L10 52 A4 4 0 0 0 16 58 L42 32 A12 12 0 0 0 58 22 L50 26 L44 20 L48 12 Z"/></svg>`,
+  fragment: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><polygon points="32,6 48,26 40,58 24,58 16,26"/><line x1="32" y1="6" x2="32" y2="58"/><line x1="16" y1="26" x2="48" y2="26"/></svg>`,
+  vial: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><path d="M26 8 L38 8 L38 30 L48 54 A6 6 0 0 1 42 60 L22 60 A6 6 0 0 1 16 54 L26 30 Z"/><line x1="22" y1="8" x2="42" y2="8"/><line x1="20" y1="46" x2="44" y2="46"/></svg>`,
+  containment: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><rect x="10" y="14" width="44" height="36" rx="2"/><line x1="10" y1="32" x2="54" y2="32"/><path d="M32 14 L32 6"/><path d="M20 60 L44 60"/></svg>`,
+  scanner: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><rect x="14" y="20" width="36" height="24" rx="2"/><circle cx="32" cy="32" r="7"/><line x1="8" y1="32" x2="14" y2="32"/><line x1="50" y1="32" x2="56" y2="32"/></svg>`
+};
+
+/* =========================================================================
+   DATA -- crew, specimens, logs
+   ========================================================================= */
+const CREW = [
+  {
+    id:'vale', seed:2, tint:'#c98a52', idNumber:'23 June &mdash; 4',
+    name:'DR. BRUNO &ldquo;BROWN&rdquo; VALE', role:"Analyses Mission ECHO's experimental results.", status:'deceased', statusLabel:'FOUND DEAD &mdash; 02:24',
+    background:`Brown recently discovered something disturbing while analysing the ECHO Core experiments. Several research records had been <b>altered</b>. Someone aboard AETHER-7 appeared to be hiding experimental results from Mission Control. Brown secretly began investigating the other scientists and stored the evidence somewhere aboard the ship. Hours before their death, Brown sent one final encrypted message:<div class="final-msg">&ldquo;I know who altered the ECHO files. If something happens to me, don't trust the official report.&rdquo;</div>At 02:24, Brown was found dead.`,
+    teaser:'Analysed the ECHO Core results. Found dead at 02:24, when emergency power returned.',
+    classified:'Time of death: during the seven-minute blackout (02:17&ndash;02:24). Location of the body is withheld from this terminal pending investigation.'
+  },
+  {
+    id:'kane', seed:1, tint:'#ff6b6b', idNumber:'17 April &mdash; 3',
+    name:'DR. ROWAN &ldquo;RED&rdquo; KANE', role:'Commander of Mission ECHO', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:'Red is responsible for the entire mission and makes the final decisions regarding experiments on the ECHO Core. Recently, Red became concerned that the experiments were becoming dangerous and considered shutting the project down.',
+    classified:'<b>SUSPICION:</b> Red had a heated argument with the victim the night before the murder.<br><br><b>ALIBI:</b> Claims to have been inside the <b>Command Deck</b>, checking the ship\'s navigation system when the blackout occurred.'
+  },
+  {
+    id:'chen', seed:4, tint:'#ff9d4a', idNumber:'11 January &mdash; 1',
+    name:'DR. OROTHY &ldquo;ORANGE&rdquo; CHEN', role:"Maintains AETHER-7's electrical systems, robots and security network.", status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:'Orange understands the ship better than almost anyone. They can access maintenance panels, security systems and electronic locks.',
+    classified:'<b>SUSPICION:</b> Whoever caused the seven-minute security blackout probably understood the ship\'s electrical systems.<br><br><b>ALIBI:</b> Claims they were repairing a malfunctioning sensor when the power failed.'
+  },
+  {
+    id:'flores', seed:0, tint:'#6fe08a', idNumber:'29 August &mdash; 5',
+    name:'DR. GAIA &ldquo;GREEN&rdquo; FLORES', role:'Studies biological samples collected from the planet.', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:"Green recently discovered that exposure to the ECHO Core might have dangerous biological effects. The victim wanted to report Green's experimental methods to Mission Control.",
+    classified:'<b>SUSPICION:</b> Security found Green\'s access card near one of the possible crime scenes.<br><br><b>ALIBI:</b> Claims the card had been missing since earlier that day.'
+  },
+  {
+    id:'solis', seed:3, tint:'#ffd84a', idNumber:'5 March &mdash; 2',
+    name:'DR. YARA &ldquo;YELLOW&rdquo; SOLIS', role:'Lead researcher studying the newly discovered energy source.', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:"Yellow believes the ECHO Core could become one of humanity's greatest discoveries. They strongly opposed anyone who wanted the research suspended.",
+    classified:'<b>SUSPICION:</b> Yellow was seen entering a restricted laboratory shortly before the security blackout.<br><br><b>ALIBI:</b> Says they were simply collecting experiment results and left before anything happened.'
+  },
+  {
+    id:'voss', seed:5, tint:'#aab6be', idNumber:'12 September &mdash; 6',
+    name:'DR. GIRU &ldquo;GREY&rdquo; VOSS', role:'Responsible for crew health and chemical research.', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:'Grey has access to medical supplies and several dangerous laboratory chemicals. Grey also examined the victim shortly after the body was discovered.',
+    classified:'<b>SUSPICION:</b> A chemical container is missing from Grey\'s laboratory inventory.<br><br><b>ALIBI:</b> Claims the missing chemical had already been reported several days earlier.'
+  }
+];
+
+const SPECIMENS = [
+  { id:'statue', name:'ECHO COMMEMORATIVE STATUE', loc:'Weapon 1 &mdash; recovered aboard AETHER-7', icon:'statue',
+    desc:'A heavy metal statue presented to the crew to mark the discovery of the ECHO Core. Its base has recently been wiped clean, and it was found away from its usual display mount.', classified:true },
+  { id:'injector', name:'CHEMICAL INJECTOR', loc:'Weapon 2 &mdash; recovered aboard AETHER-7', icon:'injector',
+    desc:'A medical injector from the crew health supplies. The chamber is empty. Lab records do not say when it was last filled.', classified:true },
+  { id:'wrench', name:'EMERGENCY WRENCH', loc:'Weapon 3 &mdash; recovered aboard AETHER-7', icon:'wrench',
+    desc:'Standard-issue maintenance wrench, the kind kept beside every maintenance panel on the ship.', classified:false }
+];
+
+const CASE_FILE = {
+  suspects: CREW.filter(c => c.status !== 'deceased').map(c => ({ name:c.name, tint:c.tint })),
+  weapons: SPECIMENS.map(w => ({ name:w.name })),
+  locations: [ { name:'DOCKING BAY' }, { name:'RESEARCH LABORATORY' }, { name:'COMMAND DECK' } ]
+};
+
+const DOCKING_LOGS = [
+  { time:'02:17', type:'ALERT', flagged:true, text:'Unexplained power failure. Surveillance cameras, door logs and communication systems offline.' },
+  { time:'02:24', type:'SYSTEM', flagged:true, text:'Emergency power restored after exactly seven minutes. Crew check-in: five of six responding. Dr. Bruno Vale found dead.' },
+  { time:'02:31', type:'TRANSMISSION', flagged:false, text:'Distress report sent to Mission Control. ECHO Core containment reports unstable. Station self-destruct countdown armed.' },
+  { time:'08:40', type:'DOCKING', flagged:false, text:'Security team shuttle docking complete. Airlock cycle nominal. Station registry on file: AETHER-7, commissioned 26 DEC 2159.' },
+  { time:'&mdash;', type:'FOUND', flagged:false, text:'Scratched into the airlock control panel, half-covered by frost: raw text <span class="mono-cipher">RUELW-59</span>. A note beside it reads: "shift 3 &mdash; same trick Brown uses for everything."' },
+  { time:'&mdash;', type:'FOUND', flagged:true, text:'Spot a strange outline? Why is that so?' }
+];
+
+const COCKPIT_LOGS = [
+  { time:'02:17', type:'SYSTEM', flagged:true, text:'Navigation console session interrupted by station-wide power failure.' },
+  { time:'02:24', type:'SYSTEM', flagged:false, text:'Emergency power restored. Navigation console back online.' },
+  { time:'08:42', type:'ALERT', flagged:true, text:'Escape shuttle ignition interlock engaged from an unlogged terminal, minutes after the security team docked.' },
+  { time:'&mdash;', type:'NOTE', flagged:true, text:'Taped beside the ignition switch: "Launch code is the same as always &mdash; the day this old ship was commissioned, no dashes."' }
+];
+
+/* =========================================================================
+   BUILD: CREW MANIFEST
+   ========================================================================= */
+function buildCrew(){
+  const grid = document.getElementById('crewGrid');
+  if(grid.dataset.built) return;
+  grid.dataset.built = '1';
+  grid.innerHTML = CREW.map(c => `
+    <div class="crew-card" onclick="openCrew('${c.id}')">
+      <div class="avatar">${avatarSVG(c.seed, c.tint)}<div class="tag">MISSION ECHO</div></div>
+      <h3>${c.name}</h3>
+      <div class="role">${c.role}</div>
+      <span class="stat ${c.status === 'confirmed' ? 'confirmed' : c.status === 'deceased' ? 'deceased' : 'unknown'}">${c.statusLabel}</span>
+      ${c.weapon ? `<div class="weapon-note">POSSIBLE WEAPON: ${c.weapon}</div>` : ''}
+      <div class="teaser">${c.teaser || c.background.substring(0, 66) + '&hellip;'}</div>
+    </div>
+  `).join('');
+}
+function openCrew(id){
+  const c = CREW.find(x => x.id === id);
+  const locked = !archiveUnlocked;
+  document.getElementById('crewModalCard').innerHTML = `
+    <div class="dc-head"><span>PERSONNEL FILE</span><button class="dc-close" onclick="closeCrew()">&times;</button></div>
+    <div class="detail-body">
+      <div class="dc-avatar"><div class="avatar">${avatarSVG(c.seed, c.tint)}</div></div>
+      <div class="detail-info">
+        <h2>${c.name}</h2>
+        <div class="role">${c.role}</div>
+        <div class="field"><label>STATUS</label><div>${c.statusLabel}</div></div>
+        <div class="field"><label>ID NUMBER</label><div>${c.idNumber}</div></div>
+        ${c.weapon ? `<div class="field"><label>POSSIBLE WEAPON</label><div>${c.weapon}</div></div>` : ''}
+        <div class="field"><label>ABOUT</label><div>${c.background}</div></div>
+        <div class="classified-block ${locked ? 'locked' : ''}">
+          <div class="cb-label">RESTRICTED &mdash; ARCHIVE ACCESS REQUIRED</div>
+          <div class="cb-text">${c.classified}</div>
+          <div class="cb-lock"><span>&#9679; SEALED</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('crewModal').classList.add('active');
+}
+function closeCrew(){ document.getElementById('crewModal').classList.remove('active'); }
+
+/* =========================================================================
+   BUILD: SPECIMEN DATABASE
+   ========================================================================= */
+function buildWeapons(){
+  const grid = document.getElementById('weaponGrid');
+  grid.innerHTML = '';
+  grid.dataset.built = '1';
+  grid.innerHTML = SPECIMENS.map(w => `
+    <div class="weapon-card ${w.classified ? 'classified' : ''}">
+      <div class="weapon-icon">${SPECIMEN_ICONS[w.icon]}</div>
+      <h3>${w.name}</h3>
+      <div class="loc">${w.loc}</div>
+      <p>${(w.classified && !archiveUnlocked) ? 'Forensic detail sealed. Requires archive decryption code.' : w.desc}</p>
+    </div>
+  `).join('');
+}
+
+/* =========================================================================
+   BUILD: CASE FILE (who / what / where deduction board)
+   ========================================================================= */
+function buildCaseFile(){
+  const fill = (id, items) => {
+    const el = document.getElementById(id);
+    if(el.dataset.built) return;
+    el.dataset.built = '1';
+    el.innerHTML = items.map(i => `<li onclick="this.classList.toggle('ruled-out')">${i.tint ? `<span class="sw" style="background:${i.tint}"></span>` : ''}${i.name}</li>`).join('');
+  };
+  fill('caseSuspects', CASE_FILE.suspects);
+  fill('caseWeapons', CASE_FILE.weapons);
+  fill('caseLocations', CASE_FILE.locations);
+}
+
+/* =========================================================================
+   BUILD: LOGS
+   ========================================================================= */
+function renderLogList(el, data){
+  el.innerHTML = data.map(l => `
+    <div class="log-entry ${l.flagged ? 'flagged' : ''} ${l.text.includes('RUELW') ? 'cipher' : ''}">
+      <div class="lh"><span><b>${l.time}</b> &nbsp; ${l.type}</span>${l.flagged ? '<span style="color:var(--red);">&#9650; FLAGGED</span>' : ''}</div>
+      <div class="lt">${l.text}</div>
+    </div>
+  `).join('');
+}
+function buildDockingLog(){
+  const el = document.getElementById('dockingLogList');
+  if(el.dataset.built) return;
+  el.dataset.built = '1';
+  renderLogList(el, DOCKING_LOGS);
+}
+function buildCockpitLog(){
+  const el = document.getElementById('cockpitLogList');
+  if(el.dataset.built) return;
+  el.dataset.built = '1';
+  renderLogList(el, COCKPIT_LOGS);
+}
+
+/* =========================================================================
+   RESTRICTED ARCHIVE GATE
+   ========================================================================= */
+let archiveUnlocked = false;
+async function tryUnlockArchive(){
+  const val = document.getElementById('gateInput').value.trim().toUpperCase();
+  const msg = document.getElementById('gateMsg');
+  if(await sha(val) === CONFIG.archivePassword){
+    archiveUnlocked = true;
+    document.getElementById('gateBlock').style.display = 'none';
+    document.getElementById('archiveContent').classList.add('active');
+    msg.textContent = '';
+    buildWeapons();
+  } else {
+    msg.textContent = 'ACCESS DENIED &mdash; INCORRECT DECRYPTION CODE';
+    msg.className = 'gate-msg err';
+  }
+}
+
+/* =========================================================================
+   LAUNCH SEQUENCE (final 6-digit code)
+   ========================================================================= */
+async function tryLaunch(){
+  const val = document.getElementById('launchInput').value.trim();
+  const msg = document.getElementById('launchMsg');
+  if(await sha(val) === CONFIG.launchCode){
+    document.getElementById('launchGate').style.display = 'none';
+    document.getElementById('launchSuccess').classList.add('active');
+    stabilizeOxygen();
+  } else {
+    msg.textContent = 'IGNITION REJECTED &mdash; INCORRECT CODE';
+    msg.className = 'gate-msg err';
+  }
+}
+
+/* =========================================================================
+   PLANET TONE PANEL (12 keys, Web Audio synth, no sound files needed)
+   Each key plays a planet's signature tone in Hz. The pitch lock listens for
+   Earth 350 -> Mars 550 -> Jupiter 200; the other planets are decoys, spaced so
+   none lands within the lock's tolerance of a target (or an octave of one).
+   ========================================================================= */
+const PIANO_KEYS = [
+  { note:'JUPITER', freq:200, key:'q' }, { note:'SATURN',  freq:235, key:'w' },
+  { note:'URANUS',  freq:265, key:'e' }, { note:'MOON',    freq:300, key:'r' },
+  { note:'EARTH',   freq:350, key:'t' }, { note:'NEPTUNE', freq:385, key:'y' },
+  { note:'CERES',   freq:430, key:'u' }, { note:'VENUS',   freq:470, key:'i' },
+  { note:'MERCURY', freq:510, key:'o' }, { note:'MARS',    freq:550, key:'p' },
+  { note:'PLUTO',   freq:600, key:'[' }, { note:'SUN',     freq:650, key:']' }
+];
+const PIANO_VOLUME = 4;     // loudness drive: 1 = clean, 4 = very loud, higher = louder but grittier
+let pianoCtx = null;
+let pianoWave = null;
+let pianoOut = null;   // shared output: saturation stage that keeps it loud without clipping
+const pianoVoices = {};
+const pianoHistory = [];
+function getPianoCtx(){
+  if(!pianoCtx){
+    pianoCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // strong fundamental plus a few soft harmonics, so low notes stay audible on small speakers
+    // strong fundamental plus brighter harmonics, so it carries on small speakers
+    const real = new Float32Array([0, 1, 0.5, 0.35, 0.22, 0.14, 0.08]);
+    pianoWave = pianoCtx.createPeriodicWave(real, new Float32Array(real.length));
+    // soft saturation pushes the tone close to full volume all the time, never above it,
+    // even with several keys held (the pitch of each note is unchanged)
+    const curve = new Float32Array(2048);
+    for(let i = 0; i < curve.length; i++){
+      const x = i / (curve.length - 1) * 2 - 1;
+      curve[i] = Math.tanh(PIANO_VOLUME * x) / Math.tanh(PIANO_VOLUME);
+    }
+    const shaper = pianoCtx.createWaveShaper();
+    shaper.curve = curve;
+    shaper.oversample = '4x';
+    const master = pianoCtx.createGain();
+    master.gain.value = 0.98;
+    pianoOut = pianoCtx.createGain();
+    pianoOut.connect(shaper); shaper.connect(master); master.connect(pianoCtx.destination);
+  }
+  if(pianoCtx.state === 'suspended') pianoCtx.resume();
+  return pianoCtx;
+}
+function pianoNoteOn(i){
+  if(pianoVoices[i]) return;
+  const ctx = getPianoCtx();
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  osc.setPeriodicWave(pianoWave);
+  osc.frequency.value = PIANO_KEYS[i].freq;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(1.0, now + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.85, now + 0.4);
+  osc.connect(g); g.connect(pianoOut);
+  osc.start(now);
+  pianoVoices[i] = { osc, g };
+  const el = document.querySelector(`.piano-key[data-i="${i}"]`);
+  if(el) el.classList.add('down');
+  if(!waveAnimating) requestAnimationFrame(animateWaves);
+  pianoHistory.push(PIANO_KEYS[i].note);
+  if(pianoHistory.length > 6) pianoHistory.shift();
+  document.getElementById('pianoReadout').innerHTML = 'LAST SIGNALS: <b>' + pianoHistory.join(' &middot; ') + '</b>';
+}
+function pianoNoteOff(i){
+  const v = pianoVoices[i];
+  if(!v) return;
+  delete pianoVoices[i];
+  const now = pianoCtx.currentTime;
+  v.g.gain.cancelScheduledValues(now);
+  v.g.gain.setValueAtTime(Math.max(v.g.gain.value, 0.0001), now);
+  v.g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+  v.osc.stop(now + 0.4);
+  const el = document.querySelector(`.piano-key[data-i="${i}"]`);
+  if(el) el.classList.remove('down');
+}
+function buildPiano(){
+  const el = document.getElementById('piano');
+  if(el.dataset.built) return;
+  el.dataset.built = '1';
+  el.innerHTML = PIANO_KEYS.map((k, i) => `
+    <div class="piano-key" data-i="${i}"><canvas></canvas><div class="meta"><span class="note">${k.note}</span><span class="kbd">${k.key.toUpperCase()}</span><span class="hz">${k.freq} Hz</span></div></div>
+  `).join('');
+  el.querySelectorAll('.piano-key').forEach(keyEl => {
+    const i = +keyEl.dataset.i;
+    keyEl.addEventListener('pointerdown', e => { e.preventDefault(); keyEl.setPointerCapture && keyEl.setPointerCapture(e.pointerId); pianoNoteOn(i); });
+    ['pointerup','pointercancel','pointerleave'].forEach(t => keyEl.addEventListener(t, () => pianoNoteOff(i)));
+  });
+  drawWaves();
+  window.addEventListener('resize', drawWaves);
+}
+/* Sine wave per planet: more cycles = higher tone. Waves of playing planets scroll. */
+let wavePhase = 0;
+let waveAnimating = false;
+function drawWaves(){
+  document.querySelectorAll('#piano .piano-key').forEach(keyEl => {
+    const i = +keyEl.dataset.i;
+    const canvas = keyEl.querySelector('canvas');
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if(!w || !h) return;
+    const dpr = window.devicePixelRatio || 1;
+    if(canvas.width !== Math.round(w * dpr)){ canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+    const c = canvas.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    c.strokeStyle = 'rgba(91,232,234,0.12)'; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.stroke();
+    const playing = !!pianoVoices[i];
+    const cycles = PIANO_KEYS[i].freq / 50;     // 200 Hz -> 4 cycles, 650 Hz -> 13 cycles
+    const amp = h * (playing ? 0.42 : 0.32);
+    const phase = playing ? wavePhase * PIANO_KEYS[i].freq / 200 : 0;
+    c.strokeStyle = playing ? '#5be8ea' : '#2c8f92'; c.lineWidth = playing ? 2 : 1.5;
+    c.beginPath();
+    for(let x = 0; x <= w; x++){
+      const y = h / 2 - amp * Math.sin(2 * Math.PI * cycles * x / w - phase);
+      if(x === 0) c.moveTo(x, y); else c.lineTo(x, y);
+    }
+    c.stroke();
+  });
+}
+function animateWaves(){
+  if(!Object.keys(pianoVoices).length){ waveAnimating = false; wavePhase = 0; drawWaves(); return; }
+  waveAnimating = true;
+  wavePhase += 0.25;
+  drawWaves();
+  requestAnimationFrame(animateWaves);
+}
+function pianoKeyIndex(e){
+  return PIANO_KEYS.findIndex(k => k.key === e.key.toLowerCase());
+}
+document.addEventListener('keydown', e => {
+  if(e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if(!document.getElementById('view-dockingbay').classList.contains('active')) return;
+  if(/^(INPUT|TEXTAREA)$/.test(document.activeElement && document.activeElement.tagName)) return;
+  const i = pianoKeyIndex(e);
+  if(i >= 0){ e.preventDefault(); pianoNoteOn(i); }
+});
+document.addEventListener('keyup', e => {
+  const i = pianoKeyIndex(e);
+  if(i >= 0) pianoNoteOff(i);
+});
+buildPiano();
+
+/* =========================================================================
+   ESP32 LINK (unlocks room 2 / room 3 on the map when their motors open)
+   The page polls the ESP32 for each room; if it can't be reached, the game
+   works as normal and the manual override codes still open the rooms.
+   ========================================================================= */
+const ESP32_ROOMS = [
+  { name:'trophyroom', label:'Room 2', url:() => CONFIG.esp32StatusUrl,  busy:false, done:false, online:false },
+  { name:'cockpit',    label:'Room 3', url:() => CONFIG.esp32Status3Url, busy:false, done:false, online:false }
+];
+async function pollEsp32Room(room){
+  if(room.busy || room.done) return;
+  room.busy = true;
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 800);
+  try{
+    const res = await fetch(room.url(), { cache:'no-store', signal:ctrl.signal });
+    const state = (await res.text()).trim().toLowerCase();
+    room.online = res.ok;
+    if(res.ok && state === 'unlocked') esp32OpenRoom(room);
+  }catch(e){
+    room.online = false;
+  }finally{
+    clearTimeout(timeout);
+    room.busy = false;
+    setEsp32Link();
+  }
+}
+function pollEsp32(){ ESP32_ROOMS.forEach(pollEsp32Room); }
+function setEsp32Link(){
+  const dot = document.getElementById('espLink');
+  if(!dot) return;
+  // once a room has opened we stop polling it, so count it as linked
+  const status = ESP32_ROOMS.map(r => `${r.label}: ${r.done ? 'opened' : r.online ? 'connected' : 'offline'}`);
+  dot.classList.toggle('on', ESP32_ROOMS.some(r => r.online || r.done));
+  dot.title = 'ESP32 link \u2014 ' + status.join(', ');
+}
+function esp32OpenRoom(room){
+  room.done = true;
+  const lock = COMPARTMENT_LOCKS[room.name];
+  if(!lock.unlocked){
+    lock.unlocked = true;
+    const flag = document.getElementById('flag-' + room.name);
+    if(flag){ flag.textContent = 'OPEN'; flag.classList.remove('locked'); flag.classList.add('open'); }
+  }
+  // Only mark the room as open on the station map; players click into it themselves.
+  const tile = document.getElementById('tile-' + room.name);
+  if(tile) tile.classList.add('esp-opened');
+}
+pollEsp32();
+setInterval(pollEsp32, CONFIG.esp32PollMs);
+</script>
+</body>
+</html>
