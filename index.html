@@ -235,6 +235,15 @@ body{
 .weapon-card p{ font-size:12.5px; color:var(--ink-dim); margin-top:8px; }
 .weapon-card.classified .weapon-icon svg{ stroke:var(--violet); }
 
+/* ============ CLUES ============ */
+.gm-note{ font-size:10.5px; color:var(--amber); margin-top:8px; letter-spacing:.5px; }
+.clue-list{ display:grid; gap:12px; max-width:700px; }
+.clue-card{ background:var(--panel); border:1px solid var(--line); padding:14px 18px; }
+.clue-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; font-family:var(--font-head); font-size:12.5px; letter-spacing:1px; color:var(--ink-bright); }
+.clue-text{ display:none; margin-top:12px; font-size:13px; color:var(--ink); }
+.clue-card.revealed .clue-text{ display:block; }
+.clue-card.revealed .clue-btn{ display:none; }
+
 /* ============ GATE (archive password) ============ */
 .gate{ max-width:480px; margin:6px auto 10px; text-align:center; }
 .gate .lock-icon{ font-size:38px; color:var(--red); margin-bottom:10px; }
@@ -368,11 +377,8 @@ body{
         research team was found <b>dead</b>. The remaining five scientists all claim they are innocent.
         But security records reveal something disturbing: <b>one of them is lying.</b>
         <br><br>
-        Three possible weapons have been recovered aboard the ship. Evidence has been detected at three
-        possible locations. And every surviving scientist had access to all parts of the laboratory.
-        <br><br>
         Your <b>security team</b> has been dispatched to AETHER-7 to investigate what happened. Search the
-        <b>Docking Bay</b>, the <b>Research Laboratory</b> and the <b>Command Deck</b>, then escape before
+        <b>Docking Bay</b>, the <b>Trophy Room</b> and the <b>Command Deck</b>, then escape before
         the station explodes. But be careful. <b>The killer is still aboard the ship.</b>
       </p>
       <div class="questions">
@@ -433,8 +439,8 @@ body{
           </div>
           <div class="tile" id="tile-trophyroom" onclick="attemptOpenCompartment('trophyroom')">
             <div class="idx">COMPARTMENT 02</div>
-            <h3>RESEARCH LABORATORY</h3>
-            <p>Where the ECHO Core experiments were run. Recovered weapons and a sealed evidence vault.</p>
+            <h3>TROPHY ROOM</h3>
+            <p>Where the crew stores the items they discovered on the newly found planet.</p>
             <div class="meta"><span>DISCOVER</span><span class="atm-mystery">MYSTERY</span><span>MEDIUM</span></div>
             <span class="flag locked" id="flag-trophyroom">LOCKED</span>
           </div>
@@ -464,6 +470,8 @@ body{
           <div class="status-row"><span>ECHO Core</span><span class="status-val bad">UNSTABLE</span></div>
           <div class="status-row"><span>Self-Destruct Countdown</span><span class="status-val warn">ARMED</span></div>
         </div>
+
+        <div class="footer-nav" style="margin-bottom:50px;"><button class="btn ghost" onclick="goToIntro()">&larr; INTRO PAGE</button></div>
       </div>
     </section>
 
@@ -478,7 +486,7 @@ body{
 
         <div class="room-section">
           <div class="sec-head"><span class="sec-idx">01.A</span><h2>PERSONNEL FILES</h2></div>
-          <p class="sec-desc">One scientist dead. Five survivors, all claiming innocence. One of them is lying. Tap a profile for the full file. Suspicions and alibis are sealed until the vault is unlocked.</p>
+          <p class="sec-desc">One scientist dead. Five survivors, all claiming innocence. One of them is lying. Tap a profile for the full file. Suspicions and alibis are listed in each file.</p>
           <div class="crew-grid" id="crewGrid"></div>
         </div>
 
@@ -506,45 +514,35 @@ body{
       <div class="wrap">
         <div class="page-head">
           <div class="eyebrow">COMPARTMENT 02</div>
-          <h1>RESEARCH LABORATORY</h1>
-          <p>Where the ECHO Core experiments were run. Every surviving scientist had access to this room.</p>
+          <h1>TROPHY ROOM</h1>
+          <p>Where the crew stores the items they discovered on the newly found planet. Every surviving scientist had access to this room.</p>
         </div>
 
         <div class="room-section">
-          <div class="sec-head"><span class="sec-idx">02.A</span><h2>RECOVERED WEAPONS</h2></div>
-          <p class="sec-desc">Three possible weapons recovered aboard the ship. Forensic detail on flagged items is sealed.</p>
+          <div class="sec-head"><span class="sec-idx">02.A</span><h2>POSSIBLE WEAPONS</h2></div>
+          <p class="sec-desc">The forensic report has returned, and all three possible weapons originated from the Trophy Room. Search for them to find clues.</p>
           <div class="weapon-grid" id="weaponGrid"></div>
         </div>
 
         <div class="room-section">
-          <div class="sec-head"><span class="sec-idx">02.B</span><h2>SEALED VAULT</h2></div>
-          <p class="sec-desc">Where Dr. Brown Vale stored the evidence from their secret investigation. Requires a decryption code.</p>
-
-          <div id="gateBlock" class="gate panel">
-            <div class="lock-icon">&#9679;</div>
-            <h2>ACCESS DENIED</h2>
-            <p>This partition was locked at the time of the incident.<br>Enter the decryption code to continue.</p>
-            <div class="gate-form">
-              <input id="gateInput" type="text" placeholder="DECRYPTION CODE" maxlength="20" autocomplete="off" onkeydown="if(event.key==='Enter')tryUnlockArchive()">
-              <button class="btn primary" onclick="tryUnlockArchive()">SUBMIT</button>
+          <div class="sec-head"><span class="sec-idx">02.B</span><h2>CLUES</h2></div>
+          <p class="sec-desc">Only press these if you are stuck. Each clue is revealed one at a time.</p>
+          <div class="clue-list">
+            <div class="clue-card">
+              <div class="clue-head"><span>CLUE 1</span><button class="btn ghost clue-btn" id="clueBtn0" onclick="revealClue(0)">REVEAL</button></div>
+              <div class="clue-text" id="clueText0">Turn on all the lights on the computer located on the left side of the room to receive the first part of the clue for the tiles.</div>
             </div>
-            <div class="gate-msg" id="gateMsg"></div>
-          </div>
-
-          <div id="archiveContent" class="gated-content">
-            <div class="evidence-card">
-              <h4>PERSONAL LOG &mdash; DR. BRUNO &ldquo;BROWN&rdquo; VALE, DATA ANALYST</h4>
-              <p>"I know who altered the ECHO files. If something happens to me, don't trust the
-              official report. Everything I found is in this vault. Compare the suspicions against
-              the alibis, because one of them doesn't hold up."</p>
+            <div class="clue-card">
+              <div class="clue-head"><span>CLUE 2</span><button class="btn ghost clue-btn" id="clueBtn1" onclick="revealClue(1)">REVEAL</button></div>
+              <div class="clue-text" id="clueText1">Turn the three statues on the right side of the room according to the poster to receive the second part of the clue for the tiles.</div>
             </div>
-            <div class="evidence-card">
-              <h4>SYSTEM ADDENDUM</h4>
-              <p>ECHO Core research records show several result files were altered in the weeks before the
-              incident. The 02:17 blackout was triggered manually from a maintenance panel, not by a fault.
-              One door entry into a restricted laboratory was logged minutes before the cameras went dark.
-              Personnel suspicions and alibis are now unsealed &mdash; cross-reference the personnel files in
-              the Docking Bay.</p>
+            <div class="clue-card">
+              <div class="clue-head"><span>CLUE 3</span><button class="btn ghost clue-btn" id="clueBtn2" onclick="revealClue(2)">REVEAL</button></div>
+              <div class="clue-text" id="clueText2">Step on the tiles based on the clues gathered from the puzzles on both sides of the room.</div>
+            </div>
+            <div class="clue-card">
+              <div class="clue-head"><span>WEAPON CLUE</span><button class="btn ghost clue-btn" id="clueBtn3" onclick="revealClue(3)">REVEAL</button></div>
+              <div class="clue-text" id="clueText3">Look closely, you will notice that one of the statues is BLOODY!</div>
             </div>
           </div>
         </div>
@@ -615,16 +613,15 @@ body{
 </div><!-- /app -->
 
 <script>
-/* =========================================================================
-   CONFIG -- change these to reset the puzzles for a new run
-   ========================================================================= */
 async function sha(s){
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('aether7|' + s));
   return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
 }
+/* =========================================================================
+   CONFIG -- change these to reset the puzzles for a new run
+   ========================================================================= */
 const CONFIG = {
   oxygenMinutes: 45,                // detonation countdown length once the team begins
-  archivePassword: "32c565b0813df792726a4ba8ace855267bc49b1b268faf6ec60ec05be14a1c85",  // SHA-256 hash
   launchCode: "27482fe772d96e0a197e6d09f966e410504b92cd671de261db41704ab2113d6e",  // SHA-256 hash
   lockScreenCode: "05c2bcf5ad132b3af39537419cedb529c7c6dfd86bdef903312c57db83027ee9",  // SHA-256 hash
   trophyRoomCode: "66136a32a661b03ed7619294fde77bab6a22eefa54347d0a426f98c2572b0a18",  // SHA-256 hash
@@ -674,6 +671,11 @@ function beginOperation(){
   buildCrew(); buildWeapons(); buildDockingLog(); buildCockpitLog(); buildCaseFile();
   startOxygen();
 }
+function goToIntro(){
+  document.getElementById('shell').style.display = 'none';
+  document.getElementById('view-home').classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
 function showView(name){
   document.querySelectorAll('#shell .view').forEach(v=>v.classList.remove('active'));
   const el = document.getElementById('view-' + name);
@@ -686,7 +688,7 @@ function showView(name){
    COMPARTMENT ACCESS LOCKS (Trophy Room + Cockpit gated from the station map)
    ========================================================================= */
 const COMPARTMENT_LOCKS = {
-  trophyroom: { code: CONFIG.trophyRoomCode, unlocked: false, prompt: 'ENTER OVERRIDE CODE TO ACCESS THE RESEARCH LABORATORY:' },
+  trophyroom: { code: CONFIG.trophyRoomCode, unlocked: false, prompt: 'ACCESS DENIED, GAME MASTER ACCESS ONLY' },
   cockpit:    { code: CONFIG.cockpitClearanceCode, unlocked: false, prompt: 'ENTER COCKPIT CLEARANCE KEY:' }
 };
 async function attemptOpenCompartment(name){
@@ -779,6 +781,8 @@ function avatarSVG(seed, tint){
 }
 const SPECIMEN_ICONS = {
   statue: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><circle cx="32" cy="14" r="7"/><path d="M24 22 L40 22 L37 44 L27 44 Z"/><rect x="18" y="44" width="28" height="8"/><rect x="14" y="52" width="36" height="6"/></svg>`,
+  helmet: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><path d="M14 44 L14 34 A18 18 0 0 1 50 34 L50 44 Z"/><path d="M14 44 L50 44 L46 54 L18 54 Z"/><path d="M14 30 C8 26 6 18 8 10 C12 16 16 20 18 24"/><path d="M50 30 C56 26 58 18 56 10 C52 16 48 20 46 24"/><line x1="32" y1="16" x2="32" y2="40"/></svg>`,
+  knife: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><path d="M52 8 C40 10 26 22 20 36 L28 44 C42 38 54 24 52 8 Z"/><line x1="20" y1="36" x2="28" y2="44"/><path d="M18 38 L26 46 L14 58 L6 50 Z"/><line x1="15" y1="41" x2="23" y2="49"/></svg>`,
   injector: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><rect x="22" y="14" width="14" height="32" rx="2" transform="rotate(35 29 30)"/><line x1="40" y1="8" x2="50" y2="15"/><line x1="45" y1="11" x2="38" y2="21"/><line x1="18" y1="44" x2="10" y2="56"/><line x1="24" y1="26" x2="30" y2="30"/><line x1="21" y1="31" x2="27" y2="35"/></svg>`,
   wrench: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><path d="M44 8 A12 12 0 0 0 36 26 L10 52 A4 4 0 0 0 16 58 L42 32 A12 12 0 0 0 58 22 L50 26 L44 20 L48 12 Z"/></svg>`,
   fragment: `<svg viewBox="0 0 64 64" fill="none" stroke-width="2"><polygon points="32,6 48,26 40,58 24,58 16,26"/><line x1="32" y1="6" x2="32" y2="58"/><line x1="16" y1="26" x2="48" y2="26"/></svg>`,
@@ -799,10 +803,10 @@ const CREW = [
     classified:'Time of death: during the seven-minute blackout (02:17&ndash;02:24). Location of the body is withheld from this terminal pending investigation.'
   },
   {
-    id:'kane', seed:1, tint:'#ff6b6b', idNumber:'17 April &mdash; 3',
-    name:'DR. ROWAN &ldquo;RED&rdquo; KANE', role:'Commander of Mission ECHO', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
-    background:'Red is responsible for the entire mission and makes the final decisions regarding experiments on the ECHO Core. Recently, Red became concerned that the experiments were becoming dangerous and considered shutting the project down.',
-    classified:'<b>SUSPICION:</b> Red had a heated argument with the victim the night before the murder.<br><br><b>ALIBI:</b> Claims to have been inside the <b>Command Deck</b>, checking the ship\'s navigation system when the blackout occurred.'
+    id:'flores', seed:1, tint:'#3d5cff', idNumber:'17 April &mdash; 3',
+    name:'DR. BRIAN &lsquo;BLUE&rsquo; FLORES', role:'Commander of Mission ECHO', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:'Blue is responsible for the entire mission and makes the final decisions regarding experiments on the ECHO Core. Recently, Blue became concerned that the experiments were becoming dangerous and considered shutting the project down.',
+    classified:'<b>SUSPICION:</b> Blue had a heated argument with the victim the night before the murder.<br><br><b>ALIBI:</b> Claims to have been inside the <b>Command Deck</b>, checking the ship\'s navigation system when the blackout occurred.'
   },
   {
     id:'chen', seed:4, tint:'#ff9d4a', idNumber:'11 January &mdash; 1',
@@ -811,10 +815,10 @@ const CREW = [
     classified:'<b>SUSPICION:</b> Whoever caused the seven-minute security blackout probably understood the ship\'s electrical systems.<br><br><b>ALIBI:</b> Claims they were repairing a malfunctioning sensor when the power failed.'
   },
   {
-    id:'flores', seed:0, tint:'#6fe08a', idNumber:'29 August &mdash; 5',
-    name:'DR. GAIA &ldquo;GREEN&rdquo; FLORES', role:'Studies biological samples collected from the planet.', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    id:'wee', seed:0, tint:'#6fe08a', idNumber:'29 August &mdash; 5',
+    name:'DR. GAIA &ldquo;GREEN&rdquo; WEE', role:'Studies biological samples collected from the planet.', status:'unknown', statusLabel:'',
     background:"Green recently discovered that exposure to the ECHO Core might have dangerous biological effects. The victim wanted to report Green's experimental methods to Mission Control.",
-    classified:'<b>SUSPICION:</b> Security found Green\'s access card near one of the possible crime scenes.<br><br><b>ALIBI:</b> Claims the card had been missing since earlier that day.'
+    classified:'<b>SUSPICION:</b> Security found Green\'s access card near one of the possible crime scenes.<br><br><b>ALIBI:</b> Green and Grey are working at the outpost during the blackout. They can vouch for each other.'
   },
   {
     id:'solis', seed:3, tint:'#ffd84a', idNumber:'5 March &mdash; 2',
@@ -824,25 +828,25 @@ const CREW = [
   },
   {
     id:'voss', seed:5, tint:'#aab6be', idNumber:'12 September &mdash; 6',
-    name:'DR. GIRU &ldquo;GREY&rdquo; VOSS', role:'Responsible for crew health and chemical research.', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    name:'DR. GIRU &ldquo;GREY&rdquo; VOSS', role:'Responsible for crew health and chemical research.', status:'unknown', statusLabel:'',
     background:'Grey has access to medical supplies and several dangerous laboratory chemicals. Grey also examined the victim shortly after the body was discovered.',
-    classified:'<b>SUSPICION:</b> A chemical container is missing from Grey\'s laboratory inventory.<br><br><b>ALIBI:</b> Claims the missing chemical had already been reported several days earlier.'
+    classified:'<b>SUSPICION:</b> A chemical container is missing from Grey\'s laboratory inventory.<br><br><b>ALIBI:</b> Green and Grey are working at the outpost during the blackout. They can vouch for each other.'
   }
 ];
 
 const SPECIMENS = [
-  { id:'statue', name:'ECHO COMMEMORATIVE STATUE', loc:'Weapon 1 &mdash; recovered aboard AETHER-7', icon:'statue',
-    desc:'A heavy metal statue presented to the crew to mark the discovery of the ECHO Core. Its base has recently been wiped clean, and it was found away from its usual display mount.', classified:true },
-  { id:'injector', name:'CHEMICAL INJECTOR', loc:'Weapon 2 &mdash; recovered aboard AETHER-7', icon:'injector',
-    desc:'A medical injector from the crew health supplies. The chamber is empty. Lab records do not say when it was last filled.', classified:true },
-  { id:'wrench', name:'EMERGENCY WRENCH', loc:'Weapon 3 &mdash; recovered aboard AETHER-7', icon:'wrench',
-    desc:'Standard-issue maintenance wrench, the kind kept beside every maintenance panel on the ship.', classified:false }
+  { id:'statue', name:'ECHO COMMEMORATIVE STATUE', icon:'statue',
+    desc:'A heavy metal statue presented to the crew to mark the discovery of the ECHO Core.', classified:false },
+  { id:'helmet', name:'THE VIKING HELMET', icon:'helmet',
+    desc:'A horned helmet taken from the crew\'s display of artefacts collected on the new planet. Its metal rim is dented and the horns are scratched, as if it had been swung or struck against something hard.', classified:false },
+  { id:'knife', name:'THE KNIFE', icon:'knife',
+    desc:'A sharp ceremonial knife kept in the trophy collection. The blade has been wiped, but traces remain in the grip and along the hilt.', classified:false }
 ];
 
 const CASE_FILE = {
   suspects: CREW.filter(c => c.status !== 'deceased').map(c => ({ name:c.name, tint:c.tint })),
   weapons: SPECIMENS.map(w => ({ name:w.name })),
-  locations: [ { name:'DOCKING BAY' }, { name:'RESEARCH LABORATORY' }, { name:'COMMAND DECK' } ]
+  locations: [ { name:'DOCKING BAY' }, { name:'TROPHY ROOM' }, { name:'COMMAND DECK' } ]
 };
 
 const DOCKING_LOGS = [
@@ -873,7 +877,7 @@ function buildCrew(){
       <div class="avatar">${avatarSVG(c.seed, c.tint)}<div class="tag">MISSION ECHO</div></div>
       <h3>${c.name}</h3>
       <div class="role">${c.role}</div>
-      <span class="stat ${c.status === 'confirmed' ? 'confirmed' : c.status === 'deceased' ? 'deceased' : 'unknown'}">${c.statusLabel}</span>
+      ${c.statusLabel ? `<span class="stat ${c.status === 'confirmed' ? 'confirmed' : c.status === 'deceased' ? 'deceased' : 'unknown'}">${c.statusLabel}</span>` : ''}
       ${c.weapon ? `<div class="weapon-note">POSSIBLE WEAPON: ${c.weapon}</div>` : ''}
       <div class="teaser">${c.teaser || c.background.substring(0, 66) + '&hellip;'}</div>
     </div>
@@ -889,12 +893,12 @@ function openCrew(id){
       <div class="detail-info">
         <h2>${c.name}</h2>
         <div class="role">${c.role}</div>
-        <div class="field"><label>STATUS</label><div>${c.statusLabel}</div></div>
+        ${c.statusLabel ? `<div class="field"><label>STATUS</label><div>${c.statusLabel}</div></div>` : ''}
         <div class="field"><label>ID NUMBER</label><div>${c.idNumber}</div></div>
         ${c.weapon ? `<div class="field"><label>POSSIBLE WEAPON</label><div>${c.weapon}</div></div>` : ''}
         <div class="field"><label>ABOUT</label><div>${c.background}</div></div>
         <div class="classified-block ${locked ? 'locked' : ''}">
-          <div class="cb-label">RESTRICTED &mdash; ARCHIVE ACCESS REQUIRED</div>
+          <div class="cb-label">SUSPICION &amp; ALIBI</div>
           <div class="cb-text">${c.classified}</div>
           <div class="cb-lock"><span>&#9679; SEALED</span></div>
         </div>
@@ -916,7 +920,6 @@ function buildWeapons(){
     <div class="weapon-card ${w.classified ? 'classified' : ''}">
       <div class="weapon-icon">${SPECIMEN_ICONS[w.icon]}</div>
       <h3>${w.name}</h3>
-      <div class="loc">${w.loc}</div>
       <p>${(w.classified && !archiveUnlocked) ? 'Forensic detail sealed. Requires archive decryption code.' : w.desc}</p>
     </div>
   `).join('');
@@ -962,22 +965,12 @@ function buildCockpitLog(){
 }
 
 /* =========================================================================
-   RESTRICTED ARCHIVE GATE
+   CLUES (revealed only when players are stuck)
    ========================================================================= */
-let archiveUnlocked = false;
-async function tryUnlockArchive(){
-  const val = document.getElementById('gateInput').value.trim().toUpperCase();
-  const msg = document.getElementById('gateMsg');
-  if(await sha(val) === CONFIG.archivePassword){
-    archiveUnlocked = true;
-    document.getElementById('gateBlock').style.display = 'none';
-    document.getElementById('archiveContent').classList.add('active');
-    msg.textContent = '';
-    buildWeapons();
-  } else {
-    msg.textContent = 'ACCESS DENIED &mdash; INCORRECT DECRYPTION CODE';
-    msg.className = 'gate-msg err';
-  }
+let archiveUnlocked = true; // suspicions, alibis and weapon details are visible from the start
+function revealClue(i){
+  const card = document.getElementById('clueText' + i).parentElement;
+  card.classList.add('revealed');
 }
 
 /* =========================================================================
