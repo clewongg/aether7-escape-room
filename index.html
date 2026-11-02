@@ -244,6 +244,14 @@ body{
 .clue-card.revealed .clue-text{ display:block; }
 .clue-card.revealed .clue-btn{ display:none; }
 
+.clue-bullets{ margin:10px 0 14px 18px; }
+.clue-bullets li{ margin-bottom:8px; }
+.warn-text{ color:var(--red); letter-spacing:.5px; }
+.pak{ color:var(--green); letter-spacing:2px; }
+.pak-table{ width:100%; border-collapse:collapse; margin-top:6px; font-size:12.5px; }
+.pak-table th, .pak-table td{ text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+.pak-table th{ color:var(--ink-dim); font-weight:normal; letter-spacing:1px; font-size:11px; }
+
 /* ============ GATE (archive password) ============ */
 .gate{ max-width:480px; margin:6px auto 10px; text-align:center; }
 .gate .lock-icon{ font-size:38px; color:var(--red); margin-bottom:10px; }
@@ -576,6 +584,35 @@ body{
           <div class="sec-head"><span class="sec-idx">03.B</span><h2>COMMAND LOGS</h2></div>
           <p class="sec-desc">Raw entries from the Command Deck's navigation console.</p>
           <div class="log-list" id="cockpitLogList"></div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">03.C</span><h2>CLUES</h2></div>
+          <div class="clue-list">
+            <div class="clue-card">
+              <div class="clue-head"><span>LASER</span></div>
+              <div class="clue-text" style="display:block;">Target activation sequence calibrated by birth order (earliest month to latest):</div>
+            </div>
+            <div class="clue-card">
+              <div class="clue-head"><span>KEYPAD</span></div>
+              <div class="clue-text" style="display:block;">
+                <b class="warn-text">WARNING: UNAUTHORIZED DATA OVERWRITE DETECTED</b>
+                <ul class="clue-bullets">
+                  <li><b>Original Entry (Victim):</b> Dr. Bruno Vale &mdash; Personal Access Key <span class="pak">1 4 1 5 9 2</span> <i>(Partially Overwritten)</i></li>
+                  <li><b>System Alert:</b> Override process interrupted at 50%. The first 3 digits remain from the <b>Victim's ID</b>, while the last 3 digits were replaced by the <b>Murderer's ID</b>.</li>
+                </ul>
+                <table class="pak-table">
+                  <tr><th>Scientist</th><th>Personal Access Key (PAK)</th></tr>
+              <tr><td>Dr. Yara &quot;Yellow&quot; Solis</td><td class="pak">8 3 9 0 6 7</td></tr>
+              <tr><td>Dr. Bruno &quot;Brown&quot; Vale</td><td class="pak">1 4 1 5 9 2</td></tr>
+              <tr><td>Dr. Brian &quot;Blue&quot; Flores</td><td class="pak">4 9 0 2 8 1 </td></tr>
+              <tr><td>Dr. Orothy &quot;Orange&quot; Chen</td><td class="pak">6 1 5 8 3 4 </td></tr>
+              <tr><td>Dr. Gaia &quot;Green&quot; Wee</td><td class="pak">3 7 2 9 0 8 </td></tr>
+              <tr><td>Dr. Giru &quot;Grey&quot; Voss</td><td class="pak">9 0 4 1 6 3 </td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="footer-nav"><button class="btn ghost" onclick="showView('map')">&larr; STATION MAP</button></div>
