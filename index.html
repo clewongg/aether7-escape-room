@@ -578,28 +578,6 @@ body{
           <div class="log-list" id="cockpitLogList"></div>
         </div>
 
-        <div class="room-section">
-          <div class="sec-head"><span class="sec-idx">03.C</span><h2>LAUNCH SEQUENCE</h2></div>
-          <p class="sec-desc">Enter the six-digit launch code to undock and get clear of AETHER-7 before it explodes.</p>
-
-          <div id="launchGate" class="gate panel">
-            <div class="lock-icon">&#9679;</div>
-            <h2>IGNITION LOCKED</h2>
-            <p>Enter the 6-digit launch code.</p>
-            <div class="gate-form">
-              <input id="launchInput" type="text" inputmode="numeric" placeholder="6-DIGIT CODE" maxlength="6" autocomplete="off" onkeydown="if(event.key==='Enter')tryLaunch()">
-              <button class="btn danger" onclick="tryLaunch()">LAUNCH</button>
-            </div>
-            <div class="gate-msg" id="launchMsg"></div>
-          </div>
-
-          <div id="launchSuccess" class="success-card panel">
-            <div class="ok-icon">&#9679;</div>
-            <h2>CLEAR FOR LAUNCH</h2>
-            <p>The shuttle undocks and pulls away seconds before the ECHO Core detonates. Investigation complete &mdash; report your verdict: WHO, WHAT and WHERE.</p>
-          </div>
-        </div>
-
         <div class="footer-nav"><button class="btn ghost" onclick="showView('map')">&larr; STATION MAP</button></div>
       </div>
     </section>
@@ -622,7 +600,6 @@ async function sha(s){
    ========================================================================= */
 const CONFIG = {
   oxygenMinutes: 45,                // detonation countdown length once the team begins
-  launchCode: "27482fe772d96e0a197e6d09f966e410504b92cd671de261db41704ab2113d6e",  // SHA-256 hash
   lockScreenCode: "05c2bcf5ad132b3af39537419cedb529c7c6dfd86bdef903312c57db83027ee9",  // SHA-256 hash
   trophyRoomCode: "66136a32a661b03ed7619294fde77bab6a22eefa54347d0a426f98c2572b0a18",  // SHA-256 hash
   cockpitClearanceCode: "66136a32a661b03ed7619294fde77bab6a22eefa54347d0a426f98c2572b0a18",  // SHA-256 hash
@@ -796,17 +773,17 @@ const SPECIMEN_ICONS = {
    ========================================================================= */
 const CREW = [
   {
+    id:'solis', seed:3, tint:'#ffd84a', idNumber:'5 March &mdash; 2',
+    name:'DR. YARA &ldquo;YELLOW&rdquo; SOLIS', role:'Lead researcher studying the newly discovered energy source.', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:"Yellow believes the ECHO Core could become one of humanity's greatest discoveries. They strongly opposed anyone who wanted the research suspended.",
+    classified:'<b>SUSPICION:</b> Yellow was seen entering a restricted laboratory shortly before the security blackout.<br><br><b>ALIBI:</b> Says they were simply collecting experiment results and left before anything happened.'
+  },
+  {
     id:'vale', seed:2, tint:'#c98a52', idNumber:'23 June &mdash; 4',
     name:'DR. BRUNO &ldquo;BROWN&rdquo; VALE', role:"Analyses Mission ECHO's experimental results.", status:'deceased', statusLabel:'FOUND DEAD &mdash; 02:24',
     background:`Brown recently discovered something disturbing while analysing the ECHO Core experiments. Several research records had been <b>altered</b>. Someone aboard AETHER-7 appeared to be hiding experimental results from Mission Control. Brown secretly began investigating the other scientists and stored the evidence somewhere aboard the ship. Hours before their death, Brown sent one final encrypted message:<div class="final-msg">&ldquo;I know who altered the ECHO files. If something happens to me, don't trust the official report.&rdquo;</div>At 02:24, Brown was found dead.`,
     teaser:'Analysed the ECHO Core results. Found dead at 02:24, when emergency power returned.',
     classified:'Time of death: during the seven-minute blackout (02:17&ndash;02:24). Location of the body is withheld from this terminal pending investigation.'
-  },
-  {
-    id:'flores', seed:1, tint:'#3d5cff', idNumber:'17 April &mdash; 3',
-    name:'DR. BRIAN &lsquo;BLUE&rsquo; FLORES', role:'Commander of Mission ECHO', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
-    background:'Blue is responsible for the entire mission and makes the final decisions regarding experiments on the ECHO Core. Recently, Blue became concerned that the experiments were becoming dangerous and considered shutting the project down.',
-    classified:'<b>SUSPICION:</b> Blue had a heated argument with the victim the night before the murder.<br><br><b>ALIBI:</b> Claims to have been inside the <b>Command Deck</b>, checking the ship\'s navigation system when the blackout occurred.'
   },
   {
     id:'chen', seed:4, tint:'#ff9d4a', idNumber:'11 January &mdash; 1',
@@ -815,22 +792,22 @@ const CREW = [
     classified:'<b>SUSPICION:</b> Whoever caused the seven-minute security blackout probably understood the ship\'s electrical systems.<br><br><b>ALIBI:</b> Claims they were repairing a malfunctioning sensor when the power failed.'
   },
   {
-    id:'wee', seed:0, tint:'#6fe08a', idNumber:'29 August &mdash; 5',
-    name:'DR. GAIA &ldquo;GREEN&rdquo; WEE', role:'Studies biological samples collected from the planet.', status:'unknown', statusLabel:'',
-    background:"Green recently discovered that exposure to the ECHO Core might have dangerous biological effects. The victim wanted to report Green's experimental methods to Mission Control.",
-    classified:'<b>SUSPICION:</b> Security found Green\'s access card near one of the possible crime scenes.<br><br><b>ALIBI:</b> Green and Grey are working at the outpost during the blackout. They can vouch for each other.'
-  },
-  {
-    id:'solis', seed:3, tint:'#ffd84a', idNumber:'5 March &mdash; 2',
-    name:'DR. YARA &ldquo;YELLOW&rdquo; SOLIS', role:'Lead researcher studying the newly discovered energy source.', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
-    background:"Yellow believes the ECHO Core could become one of humanity's greatest discoveries. They strongly opposed anyone who wanted the research suspended.",
-    classified:'<b>SUSPICION:</b> Yellow was seen entering a restricted laboratory shortly before the security blackout.<br><br><b>ALIBI:</b> Says they were simply collecting experiment results and left before anything happened.'
-  },
-  {
     id:'voss', seed:5, tint:'#aab6be', idNumber:'12 September &mdash; 6',
     name:'DR. GIRU &ldquo;GREY&rdquo; VOSS', role:'Responsible for crew health and chemical research.', status:'unknown', statusLabel:'',
     background:'Grey has access to medical supplies and several dangerous laboratory chemicals. Grey also examined the victim shortly after the body was discovered.',
     classified:'<b>SUSPICION:</b> A chemical container is missing from Grey\'s laboratory inventory.<br><br><b>ALIBI:</b> Green and Grey are working at the outpost during the blackout. They can vouch for each other.'
+  },
+  {
+    id:'flores', seed:1, tint:'#3d5cff', idNumber:'17 April &mdash; 3',
+    name:'DR. BRIAN &lsquo;BLUE&rsquo; FLORES', role:'Commander of Mission ECHO', status:'unknown', statusLabel:'SURVIVOR &mdash; UNDER SUSPICION',
+    background:'Blue is responsible for the entire mission and makes the final decisions regarding experiments on the ECHO Core. Recently, Blue became concerned that the experiments were becoming dangerous and considered shutting the project down.',
+    classified:'<b>SUSPICION:</b> Blue had a heated argument with the victim the night before the murder.<br><br><b>ALIBI:</b> Claims to have been inside the <b>Command Deck</b>, checking the ship\'s navigation system when the blackout occurred.'
+  },
+  {
+    id:'wee', seed:0, tint:'#6fe08a', idNumber:'29 August &mdash; 5',
+    name:'DR. GAIA &ldquo;GREEN&rdquo; WEE', role:'Studies biological samples collected from the planet.', status:'unknown', statusLabel:'',
+    background:"Green recently discovered that exposure to the ECHO Core might have dangerous biological effects. The victim wanted to report Green's experimental methods to Mission Control.",
+    classified:'<b>SUSPICION:</b> Security found Green\'s access card near one of the possible crime scenes.<br><br><b>ALIBI:</b> Green and Grey are working at the outpost during the blackout. They can vouch for each other.'
   }
 ];
 
@@ -862,7 +839,7 @@ const COCKPIT_LOGS = [
   { time:'02:17', type:'SYSTEM', flagged:true, text:'Navigation console session interrupted by station-wide power failure.' },
   { time:'02:24', type:'SYSTEM', flagged:false, text:'Emergency power restored. Navigation console back online.' },
   { time:'08:42', type:'ALERT', flagged:true, text:'Escape shuttle ignition interlock engaged from an unlogged terminal, minutes after the security team docked.' },
-  { time:'&mdash;', type:'NOTE', flagged:true, text:'Taped beside the ignition switch: "Launch code is the same as always &mdash; the day this old ship was commissioned, no dashes."' }
+  { time:'&mdash;', type:'NOTE', flagged:true, text:'Scrawled beside the laser grid controls: "The beams fire in the order of the crew\'s birthdays. The personnel files in the Docking Bay show how."' }
 ];
 
 /* =========================================================================
@@ -971,22 +948,6 @@ let archiveUnlocked = true; // suspicions, alibis and weapon details are visible
 function revealClue(i){
   const card = document.getElementById('clueText' + i).parentElement;
   card.classList.add('revealed');
-}
-
-/* =========================================================================
-   LAUNCH SEQUENCE (final 6-digit code)
-   ========================================================================= */
-async function tryLaunch(){
-  const val = document.getElementById('launchInput').value.trim();
-  const msg = document.getElementById('launchMsg');
-  if(await sha(val) === CONFIG.launchCode){
-    document.getElementById('launchGate').style.display = 'none';
-    document.getElementById('launchSuccess').classList.add('active');
-    stabilizeOxygen();
-  } else {
-    msg.textContent = 'IGNITION REJECTED &mdash; INCORRECT CODE';
-    msg.className = 'gate-msg err';
-  }
 }
 
 /* =========================================================================
