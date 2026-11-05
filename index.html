@@ -165,9 +165,13 @@ body{
 .avatar .tag{ position:absolute; bottom:6px; left:6px; font-size:9.5px; color:var(--cyan); letter-spacing:1px; background:rgba(4,7,10,0.7); padding:2px 6px; }
 .crew-card h3{ font-family:var(--font-head); font-size:13.5px; color:var(--ink-bright); letter-spacing:.5px; }
 .crew-card .role{ font-size:12px; color:var(--amber); margin-top:4px; }
-.crew-card .stat{ display:inline-block; margin-top:8px; font-size:10.5px; letter-spacing:1px; padding:3px 8px; border:1px solid; }
-.crew-card .stat.confirmed{ color:var(--green); border-color:#215a2e; }
+.crew-card .stat, .detail-body .stat{ display:block; text-align:center; margin-bottom:10px; font-family:var(--font-head); font-size:14px; font-weight:bold; letter-spacing:1.5px; padding:8px 10px; border:2px solid; }
+.crew-card .stat.unknown, .detail-body .stat.unknown{ background:rgba(255,79,79,0.08); }
+.crew-card .stat.deceased, .detail-body .stat.deceased{ background:rgba(185,140,240,0.10); }
+.detail-body .stat.confirmed, .crew-card .stat.confirmed{ color:var(--green); border-color:#215a2e; }
+.detail-body .stat.unknown{ color:var(--red); border-color:#5a2323; }
 .crew-card .stat.unknown{ color:var(--red); border-color:#5a2323; }
+.detail-body .stat.deceased{ color:var(--violet); border-color:#4a2f6b; }
 .crew-card .stat.deceased{ color:var(--violet); border-color:#4a2f6b; }
 .crew-card .teaser{ font-size:12px; color:var(--ink-dim); margin-top:8px; }
 .crew-card .weapon-note{ font-size:11px; color:var(--amber); margin-top:8px; letter-spacing:.5px; }
@@ -207,9 +211,9 @@ body{
 }
 .piano-key:hover{ border-color:var(--cyan-dim); }
 .piano-key canvas{ width:100%; height:56px; display:block; }
-.piano-key .meta{ display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
-.piano-key .note{ font-size:11.5px; color:var(--ink-bright); letter-spacing:1px; }
-.piano-key .hz{ font-size:11px; color:var(--amber); }
+.piano-key .meta{ display:flex; justify-content:space-between; align-items:baseline; gap:6px; flex-wrap:wrap; }
+.piano-key .note{ font-family:var(--font-head); font-size:14px; font-weight:bold; color:#ff9d3a; letter-spacing:1px; text-shadow:0 0 6px rgba(255,157,58,0.35); }
+.piano-key .hz{ font-size:10px; color:var(--ink-dim); }
 .piano-key .kbd{ margin-left:auto; font-size:9.5px; color:var(--ink-dim); border:1px solid var(--line); padding:0 4px; }
 .piano-key.down{ border-color:var(--cyan); box-shadow:0 0 14px rgba(91,232,234,0.35); transform:translateY(1px); }
 .piano-readout{ margin-top:14px; font-size:12.5px; color:var(--ink-dim); letter-spacing:1px; min-height:18px; }
@@ -287,23 +291,23 @@ body{
 .brief-item div{ font-size:13px; color:var(--ink-bright); margin-top:2px; }
 .brief-item.threat{ border-left-color:var(--red); }
 .brief-item.threat div{ color:var(--red); }
-.questions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:26px; }
-.questions span{ font-family:var(--font-head); font-size:12px; letter-spacing:2px; color:var(--amber); border:1px solid #5a4623; padding:8px 14px; }
+.questions{ display:flex; gap:14px; flex-wrap:wrap; margin-top:34px; }
+.questions span{ font-family:var(--font-head); font-size:clamp(15px,2.2vw,20px); font-weight:bold; letter-spacing:2px; color:var(--amber); border:2px solid var(--amber); background:rgba(255,180,84,0.08); padding:14px 20px; box-shadow:0 0 14px rgba(255,180,84,0.25); }
 .tile .meta{ display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
 .tile .meta span{ font-size:10px; letter-spacing:1px; padding:2px 7px; border:1px solid var(--line); color:var(--ink-dim); }
 .tile .meta .atm-emergency{ color:#ff5fd2; border-color:#5a2350; }
 .tile .meta .atm-mystery{ color:var(--violet); border-color:#4a3766; }
 .tile .meta .atm-urgency{ color:#6f8cff; border-color:#28356b; }
 .case-file{ margin-bottom:50px; }
-.case-file h4{ font-family:var(--font-head); font-size:11px; letter-spacing:2px; color:var(--ink-dim); margin-bottom:6px; font-weight:normal; }
-.case-file .cf-note{ font-size:12px; color:var(--ink-dim); margin-bottom:16px; }
-.case-cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px; }
-.case-col h5{ font-family:var(--font-head); font-size:12px; letter-spacing:2px; color:var(--amber); margin-bottom:8px; font-weight:normal; }
+.case-file h4{ font-family:var(--font-head); font-size:18px; letter-spacing:2px; color:var(--ink-bright); margin-bottom:8px; font-weight:bold; }
+.case-file .cf-note{ font-size:13px; color:var(--ink-dim); margin-bottom:18px; }
+.case-cols{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+.case-col h5{ font-family:var(--font-head); font-size:16px; letter-spacing:2px; color:var(--amber); margin-bottom:10px; font-weight:bold; padding-bottom:8px; border-bottom:2px solid #5a4623; }
 .case-col ul{ list-style:none; }
-.case-col li{ font-size:13px; padding:7px 10px; border:1px solid var(--line); margin-bottom:6px; cursor:pointer; user-select:none; transition:all .15s ease; }
+.case-col li{ font-size:15px; padding:10px 12px; border:1px solid var(--line); margin-bottom:6px; cursor:pointer; user-select:none; transition:all .15s ease; }
 .case-col li:hover{ border-color:var(--cyan-dim); }
 .case-col li.ruled-out{ color:var(--ink-dim); text-decoration:line-through; opacity:.55; }
-.case-col li .sw{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+.case-col li .sw{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; }
 .final-msg{ border:1px dashed var(--violet); background:rgba(185,140,240,0.06); padding:10px 12px; margin-top:6px; font-style:italic; color:var(--ink-bright); }
 
 @media (max-width:640px){
@@ -371,24 +375,6 @@ body{
       <div class="home-alert"><span class="blip"></span> ECHO CORE UNSTABLE &mdash; DETONATION IMMINENT</div>
       <h1 class="home-title">THE LAST SIGNAL</h1>
       <div class="home-sub">MISSION ECHO: INCIDENT REPORT &nbsp;//&nbsp; YEAR 2187</div>
-      <p class="home-desc">
-        Six elite space scientists have been stationed aboard the research vessel <b>AETHER-7</b>, a
-        laboratory orbiting a newly discovered planet. Their mission, known as <b>Mission ECHO</b>, is
-        highly classified. Deep beneath the planet's surface, the crew discovered an unknown energy
-        source known as the <b>ECHO Core</b>. Initial experiments showed that the Core could generate
-        enormous amounts of energy, enough to power entire colonies.
-        <br><br>
-        For months, the six scientists lived and worked together aboard AETHER-7. But last night,
-        something went terribly wrong. At <b>02:17</b>, the ship's security system detected an
-        unexplained power failure. For exactly <b>seven minutes</b>, the surveillance cameras, door logs
-        and communication systems went offline. When emergency power returned, one member of the
-        research team was found <b>dead</b>. The remaining five scientists all claim they are innocent.
-        But security records reveal something disturbing: <b>one of them is lying.</b>
-        <br><br>
-        Your <b>security team</b> has been dispatched to AETHER-7 to investigate what happened. Search the
-        <b>Docking Bay</b>, the <b>Trophy Room</b> and the <b>Command Deck</b>, then escape before
-        the station explodes. But be careful. <b>The killer is still aboard the ship.</b>
-      </p>
       <div class="questions">
         <span>WHO KILLED THE SCIENTIST?</span>
         <span>WHAT WEAPON WAS USED?</span>
@@ -493,24 +479,24 @@ body{
         </div>
 
         <div class="room-section">
-          <div class="sec-head"><span class="sec-idx">01.A</span><h2>PERSONNEL FILES</h2></div>
-          <p class="sec-desc">One scientist dead. Five survivors, all claiming innocence. One of them is lying. Tap a profile for the full file. Suspicions and alibis are listed in each file.</p>
-          <div class="crew-grid" id="crewGrid"></div>
-        </div>
-
-        <div class="room-section">
-          <div class="sec-head"><span class="sec-idx">01.B</span><h2>DOCKING LOG</h2></div>
-          <p class="sec-desc">Automated records from the airlock and docking systems.</p>
-          <div class="log-list" id="dockingLogList"></div>
-        </div>
-
-        <div class="room-section">
-          <div class="sec-head"><span class="sec-idx">01.C</span><h2>PLANETARY SIGNAL PANEL</h2></div>
+          <div class="sec-head"><span class="sec-idx">01.A</span><h2>PLANETARY SIGNAL PANEL</h2></div>
           <p class="sec-desc">A console wired into the airlock's acoustic system. Each waveform is a planet's signature signal. Press and hold a wave to broadcast it through the station speakers, or use the keyboard letters shown.</p>
           <div class="piano-shell panel">
             <div class="piano" id="piano"></div>
             <div class="piano-readout" id="pianoReadout">LAST SIGNALS: &mdash;</div>
           </div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">01.B</span><h2>PERSONNEL FILES</h2></div>
+          <p class="sec-desc">One scientist dead. Five survivors, all claiming innocence. One of them is lying. Tap a profile for the full file. Suspicions and alibis are listed in each file.</p>
+          <div class="crew-grid" id="crewGrid"></div>
+        </div>
+
+        <div class="room-section">
+          <div class="sec-head"><span class="sec-idx">01.C</span><h2>DOCKING LOG</h2></div>
+          <p class="sec-desc">Automated records from the airlock and docking systems.</p>
+          <div class="log-list" id="dockingLogList"></div>
         </div>
 
         <div class="footer-nav"><button class="btn ghost" onclick="showView('map')">&larr; STATION MAP</button></div>
@@ -882,16 +868,21 @@ const COCKPIT_LOGS = [
 /* =========================================================================
    BUILD: CREW MANIFEST
    ========================================================================= */
+function statusBadge(c){
+  if(!c.statusLabel) return '';
+  const cls = c.status === 'confirmed' ? 'confirmed' : c.status === 'deceased' ? 'deceased' : 'unknown';
+  return `<div class="stat ${cls}">${c.statusLabel}</div>`;
+}
 function buildCrew(){
   const grid = document.getElementById('crewGrid');
   if(grid.dataset.built) return;
   grid.dataset.built = '1';
   grid.innerHTML = CREW.map(c => `
     <div class="crew-card" onclick="openCrew('${c.id}')">
+      ${statusBadge(c)}
       <div class="avatar">${avatarSVG(c.seed, c.tint)}<div class="tag">MISSION ECHO</div></div>
       <h3>${c.name}</h3>
       <div class="role">${c.role}</div>
-      ${c.statusLabel ? `<span class="stat ${c.status === 'confirmed' ? 'confirmed' : c.status === 'deceased' ? 'deceased' : 'unknown'}">${c.statusLabel}</span>` : ''}
       ${c.weapon ? `<div class="weapon-note">POSSIBLE WEAPON: ${c.weapon}</div>` : ''}
       <div class="teaser">${c.teaser || c.background.substring(0, 66) + '&hellip;'}</div>
     </div>
@@ -903,11 +894,10 @@ function openCrew(id){
   document.getElementById('crewModalCard').innerHTML = `
     <div class="dc-head"><span>PERSONNEL FILE</span><button class="dc-close" onclick="closeCrew()">&times;</button></div>
     <div class="detail-body">
-      <div class="dc-avatar"><div class="avatar">${avatarSVG(c.seed, c.tint)}</div></div>
+      <div class="dc-avatar">${statusBadge(c)}<div class="avatar">${avatarSVG(c.seed, c.tint)}</div></div>
       <div class="detail-info">
         <h2>${c.name}</h2>
         <div class="role">${c.role}</div>
-        ${c.statusLabel ? `<div class="field"><label>STATUS</label><div>${c.statusLabel}</div></div>` : ''}
         <div class="field"><label>ID NUMBER</label><div>${c.idNumber}</div></div>
         ${c.weapon ? `<div class="field"><label>POSSIBLE WEAPON</label><div>${c.weapon}</div></div>` : ''}
         <div class="field"><label>ABOUT</label><div>${c.background}</div></div>
